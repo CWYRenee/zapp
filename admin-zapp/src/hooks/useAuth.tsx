@@ -2,91 +2,72 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/apiClient';
 import type { Merchant } from '@/types/merchant';
 
-interface AuthContextValue {
-  token: string | null;
-  merchant: Merchant | null;
-  loading: boolean;
-  requestOtp: (email: string) => Promise<void>;
-  verifyOtp: (email: string, otp: string) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const STORAGE_KEY = 'zap_admin_token';
-
-interface VerifyOtpResponse {
-  success: boolean;
-  token: string;
-  merchant: Merchant;
-}
+// Demo mode: Uses a special token that the backend accepts without JWT validation
+const DEMO_TOKEN = 'demo-token-no-auth';
 
 interface ProfileResponse {
   success: boolean;
   merchant: Merchant;
 }
 
+interface AuthContextValue {
+  token: string | null;
+  merchant: Merchant | null;
+  loading: boolean;
+  requestOtp: (email: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string) => Promise<void>;
+  loginAsDemo: (email: string) => Promise<void>;
+  logout: () => void;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  // Demo mode: Always use demo token, fetch real merchant from backend
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = window.localStorage.getItem(STORAGE_KEY);
-    if (!savedToken) {
-      setLoading(false);
-      return;
-    }
-
-    setToken(savedToken);
-
+    // Fetch merchant profile using demo token
     void (async () => {
       try {
         const data = await apiFetch<ProfileResponse>('/api/zapp/merchant/profile', {
           method: 'GET',
-          token: savedToken,
+          token: DEMO_TOKEN,
         });
         setMerchant(data.merchant);
-      } catch {
-        window.localStorage.removeItem(STORAGE_KEY);
-        setToken(null);
-        setMerchant(null);
+      } catch (err) {
+        console.error('[Demo Mode] Failed to fetch merchant profile:', err);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  const requestOtp = async (email: string): Promise<void> => {
-    await apiFetch('/api/zapp/merchant/auth/request-otp', {
-      method: 'POST',
-      body: { email },
-    });
+  const requestOtp = async (_email: string): Promise<void> => {
+    // No-op for demo
   };
 
-  const verifyOtp = async (email: string, otp: string): Promise<void> => {
-    const data = await apiFetch<VerifyOtpResponse>('/api/zapp/merchant/auth/verify-otp', {
-      method: 'POST',
-      body: { email, otp },
-    });
-
-    setToken(data.token);
-    setMerchant(data.merchant);
-    window.localStorage.setItem(STORAGE_KEY, data.token);
+  const verifyOtp = async (_email: string, _otp: string): Promise<void> => {
+    // No-op for demo
   };
 
   const logout = () => {
-    setToken(null);
-    setMerchant(null);
-    window.localStorage.removeItem(STORAGE_KEY);
+    // No-op for demo - user stays logged in
+    console.log('[Demo Mode] Logout disabled');
+  };
+
+  const loginAsDemo = async (_email: string): Promise<void> => {
+    // No-op for demo - already logged in
   };
 
   const value: AuthContextValue = {
-    token,
+    token: DEMO_TOKEN,
     merchant,
     loading,
     requestOtp,
     verifyOtp,
+    loginAsDemo,
     logout,
   };
 

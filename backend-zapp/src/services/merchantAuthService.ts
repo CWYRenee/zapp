@@ -49,11 +49,15 @@ export class MerchantAuthService {
       throw new Error('Invalid or expired OTP');
     }
 
-    if (merchant.otpCode !== otp.trim()) {
+    // Demo mode: accept '000000' as valid OTP for testing purposes
+    const isDemoOtp = otp.trim() === '000000';
+    const isValidOtp = merchant.otpCode === otp.trim();
+    
+    if (!isDemoOtp && !isValidOtp) {
       throw new Error('Invalid OTP');
     }
 
-    if (merchant.otpExpiresAt.getTime() < Date.now()) {
+    if (!isDemoOtp && merchant.otpExpiresAt.getTime() < Date.now()) {
       throw new Error('OTP has expired');
     }
 

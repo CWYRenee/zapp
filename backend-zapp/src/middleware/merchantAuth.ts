@@ -14,6 +14,9 @@ export interface AuthenticatedRequest extends Request {
   merchant?: MerchantDocument;
 }
 
+// Demo token that bypasses JWT validation and uses first available merchant
+const DEMO_TOKEN = 'demo-token-no-auth';
+
 export async function requireMerchantAuth(
   req: AuthenticatedRequest,
   res: Response,
@@ -32,6 +35,23 @@ export async function requireMerchantAuth(
     }
 
     const token = authHeader.substring('Bearer '.length).trim();
+
+    // Demo mode: bypass JWT and use first merchant in database
+    if (token === DEMO_TOKEN) {
+      const demoMerchant = await Merchant.findOne();
+      if (!demoMerchant) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'No merchant found for demo mode',
+        });
+        return;
+      }
+      console.log('[Demo Mode] Using merchant:', demoMerchant.email);
+      req.merchant = demoMerchant;
+      next();
+      return;
+    }
 
     let payload: AuthTokenPayload;
     try {

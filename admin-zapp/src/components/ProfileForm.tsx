@@ -58,12 +58,12 @@ export function ProfileForm() {
     },
   });
 
+  const merchant = data;
+
   const [localRails, setLocalRails] = useState<PaymentRailConfig[]>([]);
   const [displayName, setDisplayName] = useState('');
   const [zecAddress, setZecAddress] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-
-  const merchant = data;
 
   useEffect(() => {
     if (!merchant) return;
@@ -136,6 +136,10 @@ export function ProfileForm() {
 
   if (error) {
     return <div className="text-red-600 text-sm">Failed to load profile</div>;
+  }
+
+  if (!merchant) {
+    return <div className="text-gray-500 text-sm">No merchant data available</div>;
   }
 
   const configuredRailTypes = new Set(rails.map((r) => r.type));
