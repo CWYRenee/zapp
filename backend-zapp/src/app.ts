@@ -6,6 +6,7 @@ import batchOrderRoutes from './routes/batchOrderRoutes';
 import adminOrderRoutes from './routes/adminOrderRoutes';
 import merchantAuthRoutes from './routes/merchantAuthRoutes';
 import merchantRoutes from './routes/merchantRoutes';
+import earnRoutes from './routes/earnRoutes';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 
 export function createApp() {
@@ -24,6 +25,7 @@ export function createApp() {
   app.use('/api/zapp/admin/orders', adminOrderRoutes);
   app.use('/api/zapp/merchant', merchantAuthRoutes);
   app.use('/api/zapp/merchant', merchantRoutes);
+  app.use('/api/zapp/earn', earnRoutes);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -20,8 +20,17 @@ struct MainTabView: View {
                 }
             }
 
-            SettingsView(onResetWallet: onResetWallet)
+            EarnView(zcashWalletAddress: walletViewModel.walletInfo?.address ?? "")
                 .tag(1)
+                .tabItem {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                    if showNavLabels {
+                        Text("Earn")
+                    }
+                }
+
+            SettingsView(onResetWallet: onResetWallet)
+                .tag(2)
                 .tabItem {
                     Image(systemName: "gearshape.fill")
                     if showNavLabels {
@@ -34,7 +43,6 @@ struct MainTabView: View {
             await walletViewModel.loadWalletIfNeeded()
         }
         .task(id: selectedTab) {
-            guard selectedTab == 0 else { return }
             showNavLabels = true
             try? await Task.sleep(nanoseconds: 5_000_000_000)
             showNavLabels = false

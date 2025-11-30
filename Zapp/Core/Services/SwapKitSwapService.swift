@@ -1,19 +1,33 @@
 import Foundation
 
+/// SwapKit Swap Service
+/// Handles cross-chain swap quotes for ZEC/TAZ → NEAR bridging
+///
+/// Architecture:
+/// - Mainnet: Calls SwapKit API directly (requires SWAPKIT_KEY)
+/// - Testnet: Routes through backend API which provides simulated quotes for TAZ → NEAR testnet
 struct SwapKitSwapService {
     static let shared = SwapKitSwapService()
 
     private let session: URLSession
-    private let baseURL = URL(string: "https://api.swapkit.dev")!
+    private let swapKitURL = URL(string: "https://api.swapkit.dev")!
+    private let backendURL: String
+    private let isTestnet: Bool
 
     init(session: URLSession = .shared) {
         self.session = session
+        // Get backend URL from environment, defaulting to localhost for development
+        self.backendURL = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "http://localhost:4001"
+        // Check if we're in testnet mode
+        self.isTestnet = (ProcessInfo.processInfo.environment["NEAR_ENV"] ?? "testnet") == "testnet"
     }
 
     struct SwapExecutionQuote {
         let expectedBuyAmount: String
         let depositAddress: String
         let memo: String?
+        let estimatedTimeMinutes: Int?
+        let priceImpact: Double?
     }
 
     enum SwapKitSwapError: Error {
@@ -21,8 +35,12 @@ struct SwapKitSwapService {
         case invalidResponse
         case decodingFailed
         case noRoute
+        case networkError(Error)
     }
 
+    /// Get a swap quote for ZEC/TAZ → target asset
+    /// - In testnet mode: Routes through backend for simulation
+    /// - In mainnet mode: Calls SwapKit API directly
     func quoteZecSwap(
         buyAsset: String,
         amount: String,
@@ -30,12 +48,93 @@ struct SwapKitSwapService {
         destinationAddress: String,
         slippage: Double = 3
     ) async throws -> SwapExecutionQuote {
+        // For testnet, route through backend which provides simulation
+        if isTestnet {
+            return try await getQuoteFromBackend(
+                sellAmount: amount,
+                sourceZecAddress: sourceZecAddress,
+                destinationAddress: destinationAddress,
+                slippage: slippage
+            )
+        }
+        
+        // Mainnet: use SwapKit API directly
+        return try await getQuoteFromSwapKit(
+            buyAsset: buyAsset,
+            amount: amount,
+            sourceZecAddress: sourceZecAddress,
+            destinationAddress: destinationAddress,
+            slippage: slippage
+        )
+    }
+    
+    // MARK: - Backend API (Testnet)
+    
+    /// Get quote from backend API (for testnet simulation)
+    private func getQuoteFromBackend(
+        sellAmount: String,
+        sourceZecAddress: String,
+        destinationAddress: String,
+        slippage: Double
+    ) async throws -> SwapExecutionQuote {
+        guard let url = URL(string: "\(backendURL)/api/zapp/earn/bridge/quote") else {
+            throw SwapKitSwapError.invalidResponse
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "sellAmount": sellAmount,
+            "sourceZecAddress": sourceZecAddress,
+            "destinationNearAddress": destinationAddress,
+            "slippage": slippage
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              200 ..< 300 ~= httpResponse.statusCode else {
+            throw SwapKitSwapError.invalidResponse
+        }
+        
+        let decoder = JSONDecoder()
+        let quoteResponse = try decoder.decode(BackendQuoteResponse.self, from: data)
+        
+        guard let bestRoute = quoteResponse.bestRoute,
+              let depositAddress = bestRoute.depositAddress,
+              !depositAddress.isEmpty else {
+            throw SwapKitSwapError.noRoute
+        }
+        
+        return SwapExecutionQuote(
+            expectedBuyAmount: bestRoute.expectedBuyAmount,
+            depositAddress: depositAddress,
+            memo: bestRoute.memo,
+            estimatedTimeMinutes: bestRoute.estimatedTimeMinutes,
+            priceImpact: bestRoute.priceImpact
+        )
+    }
+    
+    // MARK: - SwapKit API (Mainnet)
+    
+    /// Get quote from SwapKit API directly (for mainnet)
+    private func getQuoteFromSwapKit(
+        buyAsset: String,
+        amount: String,
+        sourceZecAddress: String,
+        destinationAddress: String,
+        slippage: Double
+    ) async throws -> SwapExecutionQuote {
         guard let apiKey = ProcessInfo.processInfo.environment["SWAPKIT_KEY"],
               !apiKey.isEmpty else {
             throw SwapKitSwapError.missingApiKey
         }
 
-        var request = URLRequest(url: baseURL.appendingPathComponent("quote"))
+        var request = URLRequest(url: swapKitURL.appendingPathComponent("quote"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
@@ -79,7 +178,9 @@ struct SwapKitSwapService {
         return SwapExecutionQuote(
             expectedBuyAmount: expectedBuyAmount,
             depositAddress: depositAddress,
-            memo: route.memo
+            memo: route.memo,
+            estimatedTimeMinutes: route.estimatedTime.map { Int(ceil(Double($0.total ?? 600) / 60.0)) },
+            priceImpact: route.meta?.priceImpact
         )
     }
 
@@ -96,6 +197,24 @@ struct SwapKitSwapService {
 }
 
 extension SwapKitSwapService {
+    // MARK: - Backend API Response Types (Testnet)
+    
+    private struct BackendQuoteResponse: Decodable {
+        let success: Bool
+        let bestRoute: BackendRoute?
+        let routes: [BackendRoute]?
+        
+        struct BackendRoute: Decodable {
+            let expectedBuyAmount: String
+            let depositAddress: String?
+            let memo: String?
+            let estimatedTimeMinutes: Int?
+            let priceImpact: Double?
+        }
+    }
+    
+    // MARK: - SwapKit API Types (Mainnet)
+    
     private struct QuoteRequest: Encodable {
         let sellAsset: String
         let buyAsset: String

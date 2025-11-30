@@ -11,6 +11,8 @@
     "prebuild": "npm run clean"
   },
   "dependencies": {
+    "@ref-finance/ref-sdk": "^1.4.8",
+    "@swapkit/sdk": "^4.2.10",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",

@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E3B10AAA2EF98888000F07D7 /* BiometricAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA72EF98888000F07D7 /* BiometricAuthService.swift */; };
-		E3B10AAB2EF98888000F07D7 /* BiometricSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA82EF98888000F07D7 /* BiometricSettingsStore.swift */; };
-		E3B10AAC2EF98888000F07D7 /* BiometricSetupPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA92EF98888000F07D7 /* BiometricSetupPromptView.swift */; };
 		E301F23A2ED5E983000F07D7 /* RootNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F2312ED5E983000F07D7 /* RootNavigationView.swift */; };
 		E301F23B2ED5E983000F07D7 /* BalanceBreakdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F1F82ED5E983000F07D7 /* BalanceBreakdownView.swift */; };
 		E301F23C2ED5E983000F07D7 /* WalletSeedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F20F2ED5E983000F07D7 /* WalletSeedStore.swift */; };
@@ -50,14 +47,24 @@
 		E301F2602ED5E983000F07D7 /* Zatoshi+TAZ.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F1FE2ED5E983000F07D7 /* Zatoshi+TAZ.swift */; };
 		E301F2612ED5E983000F07D7 /* SwapKitSwapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F2032ED5E983000F07D7 /* SwapKitSwapService.swift */; };
 		E301F2622ED5E983000F07D7 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E301F2122ED5E983000F07D7 /* Theme.swift */; };
-		E301F2682ED5EBD5000F07D7 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		E301F26A2ED5ED49000F07D7 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		E3648DD02EDA907600962E5A /* EarnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DCC2EDA907600962E5A /* EarnView.swift */; };
+		E3648DD12EDA907600962E5A /* EarnDepositTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DC92EDA907600962E5A /* EarnDepositTab.swift */; };
+		E3648DD22EDA907600962E5A /* EarnModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DC52EDA907600962E5A /* EarnModels.swift */; };
+		E3648DD32EDA907600962E5A /* EarnViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DCE2EDA907600962E5A /* EarnViewModel.swift */; };
+		E3648DD42EDA907600962E5A /* EarnAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DC72EDA907600962E5A /* EarnAPIService.swift */; };
+		E3648DD52EDA907600962E5A /* EarnOverviewTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DCA2EDA907600962E5A /* EarnOverviewTab.swift */; };
+		E3648DD62EDA907600962E5A /* EarnPositionsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DCB2EDA907600962E5A /* EarnPositionsTab.swift */; };
+		E3648DD82EDBE58400962E5A /* PoolSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DD72EDBE58400962E5A /* PoolSelectionView.swift */; };
+		E3648DDE2EDC4A8F00962E5A /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E3648DDD2EDC4A8F00962E5A /* Media.xcassets */; };
 		E382A5C02ED80D190089CD0D /* WordSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BE2ED80D190089CD0D /* WordSearchViewModel.swift */; };
 		E382A5C12ED80D190089CD0D /* WordSearchData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BC2ED80D190089CD0D /* WordSearchData.swift */; };
 		E382A5C22ED80D190089CD0D /* WordSearchGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BD2ED80D190089CD0D /* WordSearchGameView.swift */; };
 		E382A5C62ED860A00089CD0D /* OffchainBatchTransactionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5C42ED860A00089CD0D /* OffchainBatchTransactionView.swift */; };
 		E382A5C72ED860A00089CD0D /* OffchainSendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5C52ED860A00089CD0D /* OffchainSendView.swift */; };
 		E397F6102ED5EFB60023D684 /* ZcashLightClientKit in Frameworks */ = {isa = PBXBuildFile; productRef = E397F60F2ED5EFB60023D684 /* ZcashLightClientKit */; };
+		E3B10AAA2EF98888000F07D7 /* BiometricAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA72EF98888000F07D7 /* BiometricAuthService.swift */; };
+		E3B10AAB2EF98888000F07D7 /* BiometricSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA82EF98888000F07D7 /* BiometricSettingsStore.swift */; };
+		E3B10AAC2EF98888000F07D7 /* BiometricSetupPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B10AA92EF98888000F07D7 /* BiometricSetupPromptView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,8 +75,6 @@
 		E301F1FC2ED5E983000F07D7 /* ZapTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZapTextField.swift; sourceTree = "<group>"; };
 		E301F1FE2ED5E983000F07D7 /* Zatoshi+TAZ.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Zatoshi+TAZ.swift"; sourceTree = "<group>"; };
 		E301F2002ED5E983000F07D7 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
-		E3B10AA72EF98888000F07D7 /* BiometricAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuthService.swift; sourceTree = "<group>"; };
-		E3B10AA82EF98888000F07D7 /* BiometricSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricSettingsStore.swift; sourceTree = "<group>"; };
 		E301F2012ED5E983000F07D7 /* HomeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeService.swift; sourceTree = "<group>"; };
 		E301F2022ED5E983000F07D7 /* SwapKitPriceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapKitPriceService.swift; sourceTree = "<group>"; };
 		E301F2032ED5E983000F07D7 /* SwapKitSwapService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwapKitSwapService.swift; sourceTree = "<group>"; };
@@ -93,7 +98,6 @@
 		E301F21E2ED5E983000F07D7 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
 		E301F21F2ED5E983000F07D7 /* TransactionListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionListViewModel.swift; sourceTree = "<group>"; };
 		E301F2212ED5E983000F07D7 /* WalletOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletOnboardingView.swift; sourceTree = "<group>"; };
-		E3B10AA92EF98888000F07D7 /* BiometricSetupPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricSetupPromptView.swift; sourceTree = "<group>"; };
 		E301F2222ED5E983000F07D7 /* WalletOnboardingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletOnboardingViewModel.swift; sourceTree = "<group>"; };
 		E301F2242ED5E983000F07D7 /* PayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PayView.swift; sourceTree = "<group>"; };
 		E301F2252ED5E983000F07D7 /* ZapOrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZapOrdersView.swift; sourceTree = "<group>"; };
@@ -105,11 +109,24 @@
 		E301F2312ED5E983000F07D7 /* RootNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootNavigationView.swift; sourceTree = "<group>"; };
 		E301F2332ED5E983000F07D7 /* zapp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = zapp.swift; sourceTree = "<group>"; };
 		E301F2372ED5E983000F07D7 /* Zapp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Zapp.xcodeproj; sourceTree = "<group>"; };
+		E3648DC32ED9D35600962E5A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E3648DC52EDA907600962E5A /* EarnModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnModels.swift; sourceTree = "<group>"; };
+		E3648DC72EDA907600962E5A /* EarnAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnAPIService.swift; sourceTree = "<group>"; };
+		E3648DC92EDA907600962E5A /* EarnDepositTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnDepositTab.swift; sourceTree = "<group>"; };
+		E3648DCA2EDA907600962E5A /* EarnOverviewTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnOverviewTab.swift; sourceTree = "<group>"; };
+		E3648DCB2EDA907600962E5A /* EarnPositionsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnPositionsTab.swift; sourceTree = "<group>"; };
+		E3648DCC2EDA907600962E5A /* EarnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnView.swift; sourceTree = "<group>"; };
+		E3648DCE2EDA907600962E5A /* EarnViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnViewModel.swift; sourceTree = "<group>"; };
+		E3648DD72EDBE58400962E5A /* PoolSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolSelectionView.swift; sourceTree = "<group>"; };
+		E3648DDD2EDC4A8F00962E5A /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		E382A5BC2ED80D190089CD0D /* WordSearchData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchData.swift; sourceTree = "<group>"; };
 		E382A5BD2ED80D190089CD0D /* WordSearchGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchGameView.swift; sourceTree = "<group>"; };
 		E382A5BE2ED80D190089CD0D /* WordSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchViewModel.swift; sourceTree = "<group>"; };
 		E382A5C42ED860A00089CD0D /* OffchainBatchTransactionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffchainBatchTransactionView.swift; sourceTree = "<group>"; };
 		E382A5C52ED860A00089CD0D /* OffchainSendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffchainSendView.swift; sourceTree = "<group>"; };
+		E3B10AA72EF98888000F07D7 /* BiometricAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuthService.swift; sourceTree = "<group>"; };
+		E3B10AA82EF98888000F07D7 /* BiometricSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricSettingsStore.swift; sourceTree = "<group>"; };
+		E3B10AA92EF98888000F07D7 /* BiometricSetupPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricSetupPromptView.swift; sourceTree = "<group>"; };
 		E3D0A3492EC83A1300EA81E3 /* Zapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -119,8 +136,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E397F6102ED5EFB60023D684 /* ZcashLightClientKit in Frameworks */,
-				E301F2682ED5EBD5000F07D7 /* (null) in Frameworks */,
-				E301F26A2ED5ED49000F07D7 /* (null) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +313,7 @@
 		E301F22F2ED5E983000F07D7 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				E3648DCF2EDA907600962E5A /* Earn */,
 				E382A5BF2ED80D190089CD0D /* WordSearch */,
 				E301F2192ED5E983000F07D7 /* Auth */,
 				E301F21B2ED5E983000F07D7 /* Common */,
@@ -326,6 +342,45 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E3648DC62EDA907600962E5A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				E3648DC52EDA907600962E5A /* EarnModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E3648DC82EDA907600962E5A /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E3648DC72EDA907600962E5A /* EarnAPIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E3648DCD2EDA907600962E5A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E3648DD72EDBE58400962E5A /* PoolSelectionView.swift */,
+				E3648DC92EDA907600962E5A /* EarnDepositTab.swift */,
+				E3648DCA2EDA907600962E5A /* EarnOverviewTab.swift */,
+				E3648DCB2EDA907600962E5A /* EarnPositionsTab.swift */,
+				E3648DCC2EDA907600962E5A /* EarnView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E3648DCF2EDA907600962E5A /* Earn */ = {
+			isa = PBXGroup;
+			children = (
+				E3648DC62EDA907600962E5A /* Models */,
+				E3648DC82EDA907600962E5A /* Services */,
+				E3648DCD2EDA907600962E5A /* Views */,
+				E3648DCE2EDA907600962E5A /* EarnViewModel.swift */,
+			);
+			path = Earn;
+			sourceTree = "<group>";
+		};
 		E382A5BF2ED80D190089CD0D /* WordSearch */ = {
 			isa = PBXGroup;
 			children = (
@@ -339,6 +394,8 @@
 		E3D0A3402EC83A1300EA81E3 = {
 			isa = PBXGroup;
 			children = (
+				E3648DDD2EDC4A8F00962E5A /* Media.xcassets */,
+				E3648DC32ED9D35600962E5A /* Info.plist */,
 				E3D0A34A2EC83A1300EA81E3 /* Products */,
 				E301F2162ED5E983000F07D7 /* Core */,
 				E301F22F2ED5E983000F07D7 /* Features */,
@@ -427,6 +484,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E3648DDE2EDC4A8F00962E5A /* Media.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -442,6 +500,7 @@
 				E301F23C2ED5E983000F07D7 /* WalletSeedStore.swift in Sources */,
 				E301F23D2ED5E983000F07D7 /* EmailView.swift in Sources */,
 				E301F23E2ED5E983000F07D7 /* CurrencyStore.swift in Sources */,
+				E3648DD82EDBE58400962E5A /* PoolSelectionView.swift in Sources */,
 				E301F23F2ED5E983000F07D7 /* WalletViewModel.swift in Sources */,
 				E301F2402ED5E983000F07D7 /* ZapBottomBar.swift in Sources */,
 				E301F2412ED5E983000F07D7 /* SwapView.swift in Sources */,
@@ -466,6 +525,13 @@
 				E301F2552ED5E983000F07D7 /* TransactionListViewModel.swift in Sources */,
 				E301F2562ED5E983000F07D7 /* WalletOnboardingViewModel.swift in Sources */,
 				E301F2572ED5E983000F07D7 /* SwapKitTokenService.swift in Sources */,
+				E3648DD02EDA907600962E5A /* EarnView.swift in Sources */,
+				E3648DD12EDA907600962E5A /* EarnDepositTab.swift in Sources */,
+				E3648DD22EDA907600962E5A /* EarnModels.swift in Sources */,
+				E3648DD32EDA907600962E5A /* EarnViewModel.swift in Sources */,
+				E3648DD42EDA907600962E5A /* EarnAPIService.swift in Sources */,
+				E3648DD52EDA907600962E5A /* EarnOverviewTab.swift in Sources */,
+				E3648DD62EDA907600962E5A /* EarnPositionsTab.swift in Sources */,
 				E301F2582ED5E983000F07D7 /* OTPView.swift in Sources */,
 				E301F2592ED5E983000F07D7 /* WalletSyncState.swift in Sources */,
 				E301F25A2ED5E983000F07D7 /* ZapOrderService.swift in Sources */,
@@ -621,7 +687,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K57KVAZ43Z;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zapp needs camera access to scan QR codes for payments and receiving addresses.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -642,6 +709,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				f = "";
 			};
 			name = Debug;
 		};
@@ -654,7 +722,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K57KVAZ43Z;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Zapp needs camera access to scan QR codes for payments and receiving addresses.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -675,6 +744,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				f = "";
 			};
 			name = Release;
 		};

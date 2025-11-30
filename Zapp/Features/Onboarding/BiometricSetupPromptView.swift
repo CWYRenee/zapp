@@ -40,9 +40,10 @@ struct BiometricSetupPromptView: View {
             // Explanation section
             VStack(alignment: .leading, spacing: ZapSpacing.lg) {
                 Text("Enable \(biometricType.displayName) to add an extra layer of security for sensitive actions:")
-                    .font(.body)
+                    .font(.subheadline)
                     .foregroundColor(ZapColors.textPrimary)
                     .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 VStack(alignment: .leading, spacing: ZapSpacing.sm) {
                     securityFeatureRow(icon: "arrow.up.circle.fill", text: "Sending transactions")
@@ -51,8 +52,9 @@ struct BiometricSetupPromptView: View {
                 }
                 
                 Text("Your biometric data stays on your device and is never stored by this app.")
-                    .font(.footnote)
+                    .font(.caption)
                     .foregroundColor(ZapColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, ZapSpacing.sm)
             }
             .padding(ZapSpacing.lg)
@@ -105,7 +107,7 @@ struct BiometricSetupPromptView: View {
                 .frame(width: 24)
             
             Text(text)
-                .font(.body)
+                .font(.subheadline)
                 .foregroundColor(ZapColors.textPrimary)
         }
     }

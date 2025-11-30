@@ -452,13 +452,13 @@ struct HomeView: View {
 
                 if let info = walletViewModel.walletInfo {
                     BalanceBreakdownView(
-                        shieldedSpendable: info.shieldedSpendable,
+                        shieldedSpendable: info.shieldedBalance,
                         transparent: info.transparentBalance
                     )
 
                     if isBalanceExpanded {
                         VStack(alignment: .leading, spacing: ZapSpacing.xs) {
-                            Text("Shielded (spendable): \(info.shieldedSpendable.tazString()) TAZ")
+                            Text("Shielded: \(info.shieldedBalance.tazString()) TAZ")
                                 .font(.footnote)
                                 .foregroundColor(ZapColors.textSecondary)
 

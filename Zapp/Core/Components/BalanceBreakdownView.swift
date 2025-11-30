@@ -42,7 +42,7 @@ struct BalanceBreakdownView: View {
             segments.append(
                 Segment(
                     type: .shielded,
-                    title: "Shielded (spendable)",
+                    title: "Shielded",
                     value: Zatoshi(shieldedAmount),
                     color: ZapColors.primary
                 )

@@ -56,6 +56,11 @@
             value = "76977847-ca30-427f-8716-6219e6430c4e"
             isEnabled = "YES">
          </EnvironmentVariable>
+         <EnvironmentVariable
+            key = "ZAPP_API_URL"
+            value = "http://192.168.1.192:4001"
+            isEnabled = "YES">
+         </EnvironmentVariable>
       </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
