@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
-import { OrderService } from '../services/orderService';
-import { requireAdmin } from '../middleware/adminAuth';
+import { OrderService } from '../services/orderService.js';
+import { requireAdmin } from '../middleware/adminAuth.js';
 
 const router = Router();
 

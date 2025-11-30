@@ -133,7 +133,18 @@ final class EarnAPIService {
     }
     
     /// Finalize a deposit after ZEC has been sent and confirmed.
-    /// Reserved for future bridge implementations that require explicit finalization.
+    /// 
+    /// For real bridging (when `bridgeDepositInfo.requiresFinalization` is true),
+    /// this must be called after the Zcash transaction is confirmed on-chain.
+    /// It will verify the transaction and mint nZEC on NEAR.
+    ///
+    /// - Parameters:
+    ///   - positionId: The position ID from createPosition
+    ///   - userWalletAddress: User's Zcash wallet address
+    ///   - zcashTxHash: The confirmed Zcash transaction hash
+    ///   - vout: Output index in the transaction (usually 0 or 1)
+    ///   - depositArgs: The depositArgs from prepareDeposit (base64 encoded)
+    /// - Returns: Finalization result with NEAR tx hash and nZEC amount
     func finalizeDeposit(
         positionId: String,
         userWalletAddress: String,
@@ -155,15 +166,31 @@ final class EarnAPIService {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (data, _) = try await session.data(for: request)
-        let response = try jsonDecoder.decode(FinalizeDepositApiResponse.self, from: data)
+        let (data, response) = try await session.data(for: request)
+        
+        // Check HTTP status code
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
+            // Try to decode error response
+            if let errorResponse = try? jsonDecoder.decode(FinalizeDepositApiResponse.self, from: data) {
+                return FinalizeDepositResult(
+                    success: false,
+                    nearTxHash: nil,
+                    nZecAmount: nil,
+                    error: errorResponse.message ?? "Finalization failed with status \(httpResponse.statusCode)",
+                    explorerUrl: nil
+                )
+            }
+            throw EarnAPIError.requestFailed("Finalization failed with status \(httpResponse.statusCode)")
+        }
+        
+        let apiResponse = try jsonDecoder.decode(FinalizeDepositApiResponse.self, from: data)
         
         return FinalizeDepositResult(
-            success: response.success,
-            nearTxHash: response.nearTxHash,
-            nZecAmount: response.nZecAmount,
-            error: response.message,
-            explorerUrl: response.explorerUrl
+            success: apiResponse.success,
+            nearTxHash: apiResponse.nearTxHash,
+            nZecAmount: apiResponse.nZecAmount,
+            error: apiResponse.success ? nil : (apiResponse.message ?? "Unknown error"),
+            explorerUrl: apiResponse.explorerUrl
         )
     }
     

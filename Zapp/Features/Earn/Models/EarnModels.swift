@@ -55,6 +55,8 @@ struct EarnPositionSummary: Codable, Identifiable {
     let currentApy: Double
     let depositedAt: Date?
     let lastUpdatedAt: Date
+    let completedAt: Date?
+    let withdrawToAddress: String?
     
     var id: String { positionId }
     
@@ -72,6 +74,8 @@ struct EarnPositionSummary: Codable, Identifiable {
         case currentApy
         case depositedAt
         case lastUpdatedAt
+        case completedAt
+        case withdrawToAddress
     }
 }
 
@@ -180,26 +184,32 @@ struct BridgeDepositInfo: Codable {
     let isSimulated: Bool?
     /// Source of the bridge address
     let source: BridgeAddressSource?
-    /// Optional opaque payload reserved for future bridge finalization (base64 encoded)
-    /// Not used in the current simulation-only implementation.
+    /// Opaque payload for bridge finalization (base64 encoded JSON)
+    /// Required for real bridging via omni-bridge-sdk.
     let depositArgs: String?
     /// Minimum deposit amount in ZEC
     let minDepositZec: Double?
+    /// NEAR account ID associated with this deposit (for real bridging)
+    let nearAccountId: String?
+    /// Whether this deposit requires explicit finalization from the API
+    let requiresFinalizationFromApi: Bool?
     
     /// True if this address is from live bridging (non-simulated)
     var isLiveAddress: Bool {
         !(isSimulated ?? true)
     }
     
-    /// True if this deposit requires explicit finalization (for future live bridges).
-    /// Always false in the current simulation-only implementation.
+    /// True if this deposit requires explicit finalization
+    /// This is true when using omni-bridge-sdk for real bridging
     var requiresFinalization: Bool {
-        false
+        requiresFinalizationFromApi ?? (source == .omni_bridge_sdk && isLiveAddress)
     }
     
     /// Display text for the address source
     var sourceDescription: String {
         switch source {
+        case .omni_bridge_sdk:
+            return "Omni Bridge (Real)"
         case .swapkit_api:
             return "SwapKit API"
         case .testnet_simulation:
@@ -210,10 +220,25 @@ struct BridgeDepositInfo: Codable {
             return "Unknown"
         }
     }
+    
+    enum CodingKeys: String, CodingKey {
+        case bridgeAddress
+        case expectedAmount
+        case estimatedArrivalMinutes
+        case bridgeFeePercent
+        case nearIntentId
+        case isSimulated
+        case source
+        case depositArgs
+        case minDepositZec
+        case nearAccountId
+        case requiresFinalizationFromApi = "requiresFinalization"
+    }
 }
 
 /// Source of the bridge deposit address
 enum BridgeAddressSource: String, Codable {
+    case omni_bridge_sdk
     case swapkit_api
     case testnet_simulation
     case fallback
@@ -253,6 +278,23 @@ struct BridgeHealth: Codable {
     let isOperational: Bool
     let estimatedDelayMinutes: Int
     let message: String?
+    /// Bridge mode: 'real' for omni-bridge-sdk, 'simulated' for testing
+    let mode: BridgeMode?
+    /// Current network: 'testnet' or 'mainnet'
+    let network: String?
+    /// nZEC token address on NEAR (for real bridging)
+    let nZecToken: String?
+    
+    /// Whether real bridging is active
+    var isRealBridging: Bool {
+        mode == .real
+    }
+}
+
+/// Bridge operation mode
+enum BridgeMode: String, Codable {
+    case real
+    case simulated
 }
 
 // MARK: - User Earn Stats

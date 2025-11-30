@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import { Merchant, type MerchantDocument } from '../models/Merchant';
+import { env } from '../config/env.js';
+import { Merchant, type MerchantDocument } from '../models/Merchant.js';
 
 interface AuthTokenPayload {
   sub: string;

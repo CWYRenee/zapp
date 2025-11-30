@@ -1,11 +1,11 @@
-import { ZapOrder, type ZapOrderDocument } from '../models/ZapOrder';
-import { RateService } from './rateService';
+import { ZapOrder, type ZapOrderDocument } from '../models/ZapOrder.js';
+import { RateService } from './rateService.js';
 import {
   type CreateOrderInput,
   type ZapOrderStatus,
   type StatusHistoryEntry,
-} from '../types/order';
-import type { PaymentRailType } from '../types/merchant';
+} from '../types/order.js';
+import type { PaymentRailType } from '../types/merchant.js';
 
 export class OrderService {
   private static generateOrderId(): string {

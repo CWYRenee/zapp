@@ -2,10 +2,11 @@
   "name": "zapp-backend",
   "version": "1.0.0",
   "description": "Backend API for Zapp merchant order (P2P) flow",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "ts-node src/server.ts",
+    "dev": "tsx src/server.ts",
     "build": "tsc",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean"
@@ -13,13 +14,15 @@
   "dependencies": {
     "@ref-finance/ref-sdk": "^1.4.8",
     "@swapkit/sdk": "^4.2.10",
+    "@tatumio/tatum": "^4.2.58",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "omni-bridge-sdk": "^0.22.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -30,6 +33,7 @@
     "@types/node": "^24.3.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.2"
   },
   "engines": {

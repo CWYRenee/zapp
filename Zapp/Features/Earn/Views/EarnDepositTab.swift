@@ -7,34 +7,29 @@ struct EarnDepositTab: View {
     @State private var isPoolSelectorExpanded: Bool = false
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: ZapSpacing.xl) {
-                // Pool Selection Section (NEW)
-                poolSelectionSection
-                
-                // Amount Input Section
-                amountInputSection
-                
-                // Deposit Summary
-                if viewModel.depositAmountDouble > 0 && viewModel.selectedPool != nil {
-                    depositSummarySection
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: ZapSpacing.md) {
+                    // Pool Selection (compact)
+                    poolSelectionSection
+                    
+                    // Amount Input
+                    amountInputSection
+                    
+                    // Compact Summary (only when amount > 0)
+                    if viewModel.depositAmountDouble > 0 && viewModel.selectedPool != nil {
+                        compactSummarySection
+                    }
                 }
-                
-                // Bridge Info (if prepared)
-                if let bridgeInfo = viewModel.bridgeDepositInfo {
-                    bridgeInfoSection(bridgeInfo)
-                }
-                
-                // Action Button
-                actionButtonSection
-                
-                // Info Cards
-                infoCardsSection
-                
-                Spacer(minLength: ZapSpacing.xl)
+                .padding(.horizontal, ZapSpacing.lg)
+                .padding(.top, ZapSpacing.md)
             }
-            .padding(.horizontal, ZapSpacing.xl)
-            .padding(.top, ZapSpacing.lg)
+            
+            // Fixed bottom action area
+            bottomActionArea
+                .padding(.horizontal, ZapSpacing.lg)
+                .padding(.vertical, ZapSpacing.md)
+                .background(Color(.systemBackground).shadow(color: .black.opacity(0.05), radius: 8, y: -4))
         }
         .sheet(isPresented: $showBridgeConfirmation) {
             BridgeConfirmationSheet(viewModel: viewModel, isPresented: $showBridgeConfirmation)
@@ -44,26 +39,23 @@ struct EarnDepositTab: View {
         }
     }
     
-    // MARK: - Pool Selection Section
+    // MARK: - Pool Selection Section (Compact)
     
     private var poolSelectionSection: some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
+        VStack(alignment: .leading, spacing: ZapSpacing.xs) {
             HStack {
-                Text("Select Lending Pool")
-                    .font(.headline)
+                Text("Lending Pool")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundColor(ZapColors.textPrimary)
                 
                 Spacer()
                 
                 if viewModel.isLoadingPools {
                     ProgressView()
-                        .scaleEffect(0.7)
+                        .scaleEffect(0.6)
                 }
             }
-            
-            Text("Choose where to lend your ZEC and earn yield on RHEA Finance")
-                .font(.caption)
-                .foregroundColor(ZapColors.textSecondary)
             
             PoolSelectionView(
                 viewModel: viewModel,
@@ -72,412 +64,143 @@ struct EarnDepositTab: View {
         }
     }
     
-    // MARK: - Amount Input Section
+    // MARK: - Amount Input Section (Compact)
     
     private var amountInputSection: some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            Text("Deposit Amount")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: ZapSpacing.xs) {
+            Text("Amount")
+                .font(.subheadline)
+                .fontWeight(.medium)
                 .foregroundColor(ZapColors.textPrimary)
             
             HStack {
                 TextField("0.00", text: $viewModel.depositAmount)
-                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
                     .foregroundColor(ZapColors.textPrimary)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.leading)
+                    .disabled(viewModel.depositTransactionSent)
                 
                 Text("ZEC")
-                    .font(.title2)
+                    .font(.title3)
                     .fontWeight(.medium)
                     .foregroundColor(ZapColors.textSecondary)
             }
-            .padding(ZapSpacing.md)
+            .padding(ZapSpacing.sm)
             .background(Color(.secondarySystemBackground))
             .cornerRadius(ZapRadius.medium)
             
-            // Validation Message
-            if let message = viewModel.depositValidationMessage {
-                Text(message)
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-            
-            // Quick Amount Buttons
-            HStack(spacing: ZapSpacing.sm) {
+            // Quick Amount Buttons (inline)
+            HStack(spacing: ZapSpacing.xs) {
                 ForEach([0.1, 0.5, 1.0, 5.0], id: \.self) { amount in
                     Button {
                         viewModel.depositAmount = String(format: "%.1f", amount)
                     } label: {
                         Text("\(amount, specifier: "%.1f")")
-                            .font(.caption)
+                            .font(.caption2)
                             .fontWeight(.medium)
                             .foregroundColor(ZapColors.textSecondary)
                             .padding(.horizontal, ZapSpacing.sm)
-                            .padding(.vertical, ZapSpacing.xs)
+                            .padding(.vertical, 4)
                             .background(Color(.tertiarySystemBackground))
                             .cornerRadius(ZapRadius.small)
                     }
                     .buttonStyle(.plain)
+                    .disabled(viewModel.depositTransactionSent)
                 }
-            }
-        }
-    }
-    
-    // MARK: - Deposit Summary Section
-    
-    private var depositSummarySection: some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            Text("Deposit Summary")
-                .font(.headline)
-                .foregroundColor(ZapColors.textPrimary)
-            
-            VStack(spacing: ZapSpacing.sm) {
-                // Selected pool info
-                if let pool = viewModel.selectedPool {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Lending to")
-                                .font(.caption)
-                                .foregroundColor(ZapColors.textSecondary)
-                            Text("\(pool.displayName) on RHEA Finance")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(ZapColors.textPrimary)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(pool.formattedApy)
-                                .font(.headline)
-                                .foregroundColor(.green)
-                            Text("APY")
-                                .font(.caption)
-                                .foregroundColor(ZapColors.textSecondary)
-                        }
-                    }
-                    .padding(ZapSpacing.sm)
-                    .background(ZapColors.primary.opacity(0.1))
-                    .cornerRadius(ZapRadius.small)
-                }
-                
-                Divider()
-                
-                // You Send
-                summaryRow(label: "You Send", value: String(format: "%.6f ZEC", viewModel.depositAmountDouble))
-                
-                // Bridge Fee (dynamic)
-                summaryRow(
-                    label: "Bridge Fee (\(viewModel.formattedBridgeFeePercent))",
-                    value: String(format: "-%.6f ZEC", viewModel.bridgeFeeAmount)
-                )
-                
-                // Pool Fee (if applicable)
-                if let pool = viewModel.selectedPool, pool.fee > 0 {
-                    summaryRow(
-                        label: "Pool Fee (\(pool.formattedFee))",
-                        value: "Included in APY",
-                        valueColor: ZapColors.textSecondary
-                    )
-                }
-                
-                Divider()
-                
-                // You Receive - based on selected pool
-                if let pool = viewModel.selectedPool {
-                    summaryRow(
-                        label: "You Receive",
-                        value: String(format: "%.6f %@", viewModel.estimatedAmount, viewModel.receiveAssetSymbol),
-                        isBold: true
-                    )
-                    
-                    // Show pool token breakdown
-                    Text("Your ZEC will be converted to \(pool.tokenSymbols.joined(separator: " + ")) liquidity")
-                        .font(.caption2)
-                        .foregroundColor(ZapColors.textSecondary)
-                        .padding(.top, 2)
-                }
-                
-                Divider()
-                
-                // Expected APY from pool
-                summaryRow(
-                    label: "Expected APY",
-                    value: viewModel.formattedCurrentApy,
-                    valueColor: .green
-                )
-                
-                // Estimated earnings in 1 year based on pool APY
-                let yearlyEarnings = viewModel.estimatedAmount * (viewModel.currentApy / 100)
-                summaryRow(
-                    label: "Est. Yearly Earnings",
-                    value: String(format: "+%.6f ZEC", yearlyEarnings),
-                    valueColor: .green
-                )
-            }
-            .padding(ZapSpacing.md)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(ZapRadius.medium)
-        }
-    }
-    
-    private func summaryRow(
-        label: String,
-        value: String,
-        valueColor: Color = ZapColors.textPrimary,
-        isBold: Bool = false
-    ) -> some View {
-        HStack {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(ZapColors.textSecondary)
-            Spacer()
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(isBold ? .semibold : .regular)
-                .foregroundColor(valueColor)
-        }
-    }
-    
-    // MARK: - Bridge Info Section
-    
-    private func bridgeInfoSection(_ bridgeInfo: BridgeDepositInfo) -> some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            // Simulation Warning Banner
-            if bridgeInfo.isSimulated ?? true {
-                HStack(spacing: ZapSpacing.sm) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Testnet Simulation")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.orange)
-                        Text("This is a simulated address for testing. Do NOT send real ZEC.")
-                            .font(.caption2)
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                }
-                .padding(ZapSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.orange.opacity(0.15))
-                .cornerRadius(ZapRadius.small)
-            } else {
-                // Live address indicator
-                HStack(spacing: ZapSpacing.sm) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Live Bridge Address")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.green)
-                        Text("From \(bridgeInfo.sourceDescription)")
-                            .font(.caption2)
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                }
-                .padding(ZapSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.green.opacity(0.15))
-                .cornerRadius(ZapRadius.small)
-            }
-            
-            HStack {
-                Text("Bridge Address")
-                    .font(.headline)
-                    .foregroundColor(ZapColors.textPrimary)
                 
                 Spacer()
                 
-                Button {
-                    UIPasteboard.general.string = bridgeInfo.bridgeAddress
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "doc.on.doc")
-                        Text("Copy")
-                    }
-                    .font(.caption)
-                    .foregroundColor(ZapColors.primary)
-                }
-            }
-            
-            VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-                // Bridge Address
-                Text(bridgeInfo.bridgeAddress)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(ZapColors.textPrimary)
-                    .padding(ZapSpacing.sm)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.tertiarySystemBackground))
-                    .cornerRadius(ZapRadius.small)
-                
-                // Instructions - different for simulated vs live
-                if bridgeInfo.isSimulated ?? true {
-                    HStack(spacing: ZapSpacing.sm) {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundColor(.orange)
-                        Text("In testnet mode. Bridge flow is simulated for development.")
-                            .font(.caption)
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                } else {
-                    HStack(spacing: ZapSpacing.sm) {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundColor(.blue)
-                        Text("Send exactly \(viewModel.depositAmountDouble) ZEC to this address to start earning")
-                            .font(.caption)
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                }
-                
-                // Estimated arrival
-                HStack(spacing: ZapSpacing.sm) {
-                    Image(systemName: "clock.fill")
+                // Validation inline
+                if let message = viewModel.depositValidationMessage {
+                    Text(message)
+                        .font(.caption2)
                         .foregroundColor(.orange)
-                    Text("Estimated arrival: ~\(bridgeInfo.estimatedArrivalMinutes) minutes")
-                        .font(.caption)
-                        .foregroundColor(ZapColors.textSecondary)
                 }
             }
-            .padding(ZapSpacing.md)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(ZapRadius.medium)
         }
     }
     
-    // MARK: - Action Button Section
+    // MARK: - Compact Summary Section
     
-    private var actionButtonSection: some View {
-        VStack(spacing: ZapSpacing.sm) {
-            if viewModel.bridgeDepositInfo == nil {
-                // Show pool selection prompt if no pool selected
-                if viewModel.selectedPool == nil && viewModel.depositAmountDouble > 0 {
-                    HStack(spacing: ZapSpacing.xs) {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundColor(.orange)
-                        Text("Please select a lending pool above")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
-                    .padding(ZapSpacing.sm)
-                    .background(Color.orange.opacity(0.1))
-                    .cornerRadius(ZapRadius.small)
-                }
-                
-                // Prepare deposit button
-                ZapButton(
-                    viewModel.selectedPool != nil 
-                        ? "Deposit to \(viewModel.selectedPool!.displayName)"
-                        : "Prepare Deposit",
-                    isLoading: viewModel.isPreparingDeposit,
-                    isDisabled: !viewModel.canDeposit
-                ) {
-                    Task {
-                        await viewModel.prepareDeposit()
-                    }
-                }
-            } else {
-                // Bridge info is available - show send options
-                if let bridgeInfo = viewModel.bridgeDepositInfo {
-                    // Auto-send button (works for both testnet and mainnet)
-                    if viewModel.isWalletReady {
-                        // Testnet indicator
-                        if viewModel.isTestnetDeposit {
-                            HStack(spacing: ZapSpacing.xs) {
-                                Image(systemName: "testtube.2")
-                                    .foregroundColor(.orange)
-                                Text("Testnet Mode - Sending to simulated bridge")
-                                    .font(.caption)
-                                    .foregroundColor(.orange)
-                            }
-                            .padding(ZapSpacing.sm)
-                            .background(Color.orange.opacity(0.1))
-                            .cornerRadius(ZapRadius.small)
-                        }
-                        
-                        ZapButton(
-                            "Send \(viewModel.depositAmountDouble) ZEC Now",
-                            isLoading: viewModel.isSendingDeposit,
-                            isDisabled: false
-                        ) {
-                            showAutoSendConfirmation = true
-                        }
-                        
-                        Text(viewModel.isTestnetDeposit 
-                            ? "Your TAZ will be sent to the testnet bridge address"
-                            : "Your ZEC will be sent automatically to the bridge")
+    private var compactSummarySection: some View {
+        VStack(spacing: ZapSpacing.xs) {
+            if let pool = viewModel.selectedPool {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("You'll receive")
                             .font(.caption)
                             .foregroundColor(ZapColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Divider()
-                            .padding(.vertical, ZapSpacing.xs)
-                        
-                        // Manual option
-                        Button("I'll send manually instead") {
-                            showBridgeConfirmation = true
-                        }
-                        .font(.caption)
-                        .foregroundColor(ZapColors.primary)
-                    } else {
-                        // Wallet not ready
-                        HStack(spacing: ZapSpacing.xs) {
-                            ProgressView()
-                                .scaleEffect(0.7)
-                            Text("Waiting for wallet to sync...")
-                                .font(.caption)
-                                .foregroundColor(ZapColors.textSecondary)
-                        }
-                        
-                        // Manual send flow while waiting
-                        ZapButton("I've Sent the ZEC Manually", isLoading: viewModel.isLoading) {
-                            showBridgeConfirmation = true
-                        }
+                        Text(String(format: "~%.4f %@", viewModel.estimatedAmount, viewModel.receiveAssetSymbol))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(pool.formattedApy)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.green)
+                        Text("APY")
+                            .font(.caption2)
+                            .foregroundColor(ZapColors.textSecondary)
                     }
                 }
                 
-                // Cancel button
-                Button("Cancel") {
-                    viewModel.resetDepositFlow()
+                // Fee info inline
+                HStack(spacing: ZapSpacing.sm) {
+                    Text("Fee: \(viewModel.formattedBridgeFeePercent)")
+                        .font(.caption2)
+                        .foregroundColor(ZapColors.textSecondary)
+                    
+                    Text("•")
+                        .foregroundColor(ZapColors.textSecondary)
+                    
+                    Text("Est. ~\(viewModel.bridgeDepositInfo?.estimatedArrivalMinutes ?? 10) min")
+                        .font(.caption2)
+                        .foregroundColor(ZapColors.textSecondary)
                 }
-                .font(.body)
-                .foregroundColor(ZapColors.textSecondary)
             }
-            
-            // Success message
-            if viewModel.depositTransactionSent && !viewModel.pendingFinalization {
-                HStack(spacing: ZapSpacing.xs) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Transaction sent! Your deposit is being processed.")
-                        .font(.caption)
-                        .foregroundColor(.green)
-                }
-                .padding(ZapSpacing.sm)
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(ZapRadius.small)
-            }
-            
-            // Finalization Section (for future live bridges)
-            if viewModel.pendingFinalization {
-                finalizationSection
-            }
-            
-            // Error message
+        }
+        .padding(ZapSpacing.sm)
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(ZapRadius.small)
+    }
+    
+    // MARK: - Bottom Action Area (Fixed)
+    
+    private var bottomActionArea: some View {
+        VStack(spacing: ZapSpacing.sm) {
+            // Error message (if any)
             if let error = viewModel.errorMessage {
                 Text(error)
                     .font(.caption)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
             }
+            
+            // State: ZEC Sent Successfully
+            if viewModel.depositTransactionSent || viewModel.pendingFinalization {
+                successStateView
+            }
+            // State: Ready to send
+            else if viewModel.bridgeDepositInfo != nil {
+                readyToSendView
+            }
+            // State: Initial - prepare deposit
+            else {
+                prepareDepositView
+            }
         }
     }
     
-    // MARK: - Finalization Section (reserved)
+    // MARK: - Success State (After sending)
     
-    private var finalizationSection: some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.md) {
-            // Header
+    private var successStateView: some View {
+        VStack(spacing: ZapSpacing.sm) {
+            // Success banner
             HStack(spacing: ZapSpacing.sm) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
@@ -485,180 +208,119 @@ struct EarnDepositTab: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ZEC Sent Successfully!")
-                        .font(.headline)
-                        .foregroundColor(ZapColors.textPrimary)
-                    Text("Complete the finalization to mint nZEC on NEAR")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.green)
+                    Text("Processing automatically...")
                         .font(.caption)
                         .foregroundColor(ZapColors.textSecondary)
                 }
-            }
-            
-            // Instructions
-            VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-                Text("Final Step: Enter Transaction Details")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(ZapColors.textPrimary)
                 
-                Text("Wait for your Zcash transaction to have at least 3 confirmations, then enter the details below.")
-                    .font(.caption)
-                    .foregroundColor(ZapColors.textSecondary)
-            }
-            
-            // Transaction Hash Input
-            VStack(alignment: .leading, spacing: ZapSpacing.xs) {
-                Text("Zcash Transaction Hash")
-                    .font(.caption)
-                    .foregroundColor(ZapColors.textSecondary)
+                Spacer()
                 
-                TextField("Enter transaction hash", text: $viewModel.finalizationTxHash)
-                    .font(.system(.caption, design: .monospaced))
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
+                ProgressView()
+                    .scaleEffect(0.8)
             }
+            .padding(ZapSpacing.md)
+            .background(Color.green.opacity(0.1))
+            .cornerRadius(ZapRadius.medium)
             
-            // Vout Input
-            VStack(alignment: .leading, spacing: ZapSpacing.xs) {
-                Text("Output Index (vout)")
-                    .font(.caption)
-                    .foregroundColor(ZapColors.textSecondary)
-                
+            // View positions button
+            Button {
+                viewModel.currentTab = .positions
+                viewModel.resetDepositFlow()
+            } label: {
                 HStack {
-                    Picker("Output Index", selection: $viewModel.finalizationVout) {
-                        Text("0").tag(0)
-                        Text("1").tag(1)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .frame(width: 100)
-                    
-                    Spacer()
-                    
-                    Text("Usually 0 for standard transactions")
-                        .font(.caption2)
-                        .foregroundColor(ZapColors.textSecondary)
+                    Image(systemName: "list.bullet.rectangle")
+                    Text("View My Positions")
                 }
-            }
-            
-            // Finalize Button
-            ZapButton(
-                "Finalize Deposit",
-                isLoading: viewModel.isFinalizingDeposit,
-                isDisabled: viewModel.finalizationTxHash.isEmpty
-            ) {
-                Task {
-                    await viewModel.finalizeDeposit()
-                }
-            }
-            
-            // Success Result
-            if let result = viewModel.finalizationResult, result.success {
-                VStack(alignment: .leading, spacing: ZapSpacing.xs) {
-                    HStack(spacing: ZapSpacing.xs) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Deposit Finalized!")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.green)
-                    }
-                    
-                    if let nZec = result.nZecAmount {
-                        Text("Received: \(nZec) nZEC")
-                            .font(.caption)
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                    
-                    if let explorerUrl = result.explorerUrl, let url = URL(string: explorerUrl) {
-                        Link("View on NEAR Explorer →", destination: url)
-                            .font(.caption)
-                            .foregroundColor(ZapColors.primary)
-                    }
-                }
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(ZapColors.primary)
+                .frame(maxWidth: .infinity)
                 .padding(ZapSpacing.sm)
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(ZapRadius.small)
+                .background(ZapColors.primary.opacity(0.1))
+                .cornerRadius(ZapRadius.medium)
             }
             
-            // Cancel option
-            Button("Cancel and Start Over") {
+            // New deposit button
+            Button("Start New Deposit") {
                 viewModel.resetDepositFlow()
             }
             .font(.caption)
             .foregroundColor(ZapColors.textSecondary)
         }
-        .padding(ZapSpacing.md)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(ZapRadius.medium)
     }
     
-    // MARK: - Info Cards Section
+    // MARK: - Ready to Send State
     
-    private var infoCardsSection: some View {
-        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            Text("How It Works")
-                .font(.headline)
-                .foregroundColor(ZapColors.textPrimary)
-            
-            VStack(spacing: ZapSpacing.sm) {
-                infoCard(
-                    step: "1",
-                    title: "Select a Lending Pool",
-                    description: "Choose from available liquidity pools on RHEA Finance. Higher APY pools may have more volatility.",
-                    icon: "list.bullet.circle.fill"
-                )
-                
-                infoCard(
-                    step: "2",
-                    title: "Bridge ZEC to NEAR",
-                    description: "Send your ZEC to the bridge address. It will be wrapped and bridged to NEAR automatically.",
-                    icon: "arrow.up.circle.fill"
-                )
-                
-                infoCard(
-                    step: "3",
-                    title: "Earn Yield",
-                    description: "Your wrapped ZEC is deposited into the selected pool to earn yield from trading fees and incentives.",
-                    icon: "chart.line.uptrend.xyaxis.circle.fill"
-                )
-                
-                infoCard(
-                    step: "4",
-                    title: "Withdraw Anytime",
-                    description: "Withdraw your ZEC plus earnings back to your shielded wallet whenever you want.",
-                    icon: "arrow.down.circle.fill"
-                )
+    private var readyToSendView: some View {
+        VStack(spacing: ZapSpacing.sm) {
+            // Testnet indicator (compact)
+            if viewModel.isTestnetDeposit {
+                HStack(spacing: ZapSpacing.xs) {
+                    Image(systemName: "testtube.2")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                    Text("Testnet Mode")
+                        .font(.caption)
+                        .foregroundColor(.orange)
+                }
             }
+            
+            // Main send button
+            ZapButton(
+                "Send \(String(format: "%.4f", viewModel.depositAmountDouble)) ZEC",
+                isLoading: viewModel.isSendingDeposit,
+                isDisabled: !viewModel.isWalletReady
+            ) {
+                showAutoSendConfirmation = true
+            }
+            
+            // Wallet sync status
+            if !viewModel.isWalletReady {
+                HStack(spacing: ZapSpacing.xs) {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                    Text("Syncing wallet...")
+                        .font(.caption)
+                        .foregroundColor(ZapColors.textSecondary)
+                }
+            }
+            
+            // Cancel
+            Button("Cancel") {
+                viewModel.resetDepositFlow()
+            }
+            .font(.caption)
+            .foregroundColor(ZapColors.textSecondary)
         }
     }
     
-    private func infoCard(step: String, title: String, description: String, icon: String) -> some View {
-        HStack(alignment: .top, spacing: ZapSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(ZapColors.primary.opacity(0.2))
-                    .frame(width: 32, height: 32)
-                Text(step)
+    // MARK: - Prepare Deposit State
+    
+    private var prepareDepositView: some View {
+        VStack(spacing: ZapSpacing.xs) {
+            // Pool selection hint
+            if viewModel.selectedPool == nil && viewModel.depositAmountDouble > 0 {
+                Text("Select a pool above to continue")
                     .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundColor(ZapColors.primary)
+                    .foregroundColor(.orange)
             }
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(ZapColors.textPrimary)
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(ZapColors.textSecondary)
+            // Main button
+            ZapButton(
+                viewModel.selectedPool != nil
+                    ? "Deposit \(String(format: "%.4f", viewModel.depositAmountDouble)) ZEC"
+                    : "Select Pool & Amount",
+                isLoading: viewModel.isPreparingDeposit,
+                isDisabled: !viewModel.canDeposit
+            ) {
+                Task {
+                    await viewModel.prepareDeposit()
+                }
             }
-            
-            Spacer()
         }
-        .padding(ZapSpacing.sm)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(ZapRadius.small)
     }
 }
 
@@ -763,7 +425,7 @@ struct BridgeConfirmationSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.large])
     }
 }
 
@@ -903,7 +565,7 @@ struct AutoSendConfirmationSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
     }
     
     private func summaryRow(label: String, value: String, valueColor: Color = ZapColors.textPrimary) -> some View {

@@ -26,7 +26,7 @@ import {
   type Transaction,
 } from '@ref-finance/ref-sdk';
 
-import { NearAccountService } from './nearAccountService';
+import { NearAccountService } from './nearAccountService.js';
 
 // Initialize Ref SDK environment
 const NEAR_ENV = process.env.NEAR_ENV || 'mainnet';

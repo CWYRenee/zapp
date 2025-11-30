@@ -86,6 +86,16 @@ final class EarnViewModel: ObservableObject {
         bridgeDepositInfo?.isSimulated ?? true
     }
     
+    /// Check if real bridging is active (vs simulated)
+    var isRealBridging: Bool {
+        bridgeHealth?.isRealBridging ?? false
+    }
+    
+    /// Check if current bridge network is testnet
+    var isTestnetNetwork: Bool {
+        bridgeHealth?.network == "testnet"
+    }
+    
     // MARK: - Tabs
     
     enum EarnTab: String, CaseIterable, Identifiable {
@@ -311,6 +321,9 @@ final class EarnViewModel: ObservableObject {
     /// Send ZEC directly to the bridge address (auto-deposit)
     /// This automatically sends from the user's wallet to the bridge
     /// Works for both testnet (simulated) and mainnet (live) addresses
+    ///
+    /// For real bridging, after the ZEC transaction confirms on-chain,
+    /// the user must call `finalizeDeposit()` with the transaction hash.
     func sendDepositToBridge() async {
         guard let bridgeInfo = bridgeDepositInfo else {
             errorMessage = "No bridge address available. Please prepare deposit first."
@@ -331,18 +344,24 @@ final class EarnViewModel: ObservableObject {
         errorMessage = nil
         depositTransactionSent = false
         
-        // Log testnet/mainnet mode
-        let isTestnet = bridgeInfo.isSimulated ?? true
-        print("[EarnVM] Sending deposit to bridge - Mode: \(isTestnet ? "TESTNET" : "MAINNET")")
-        print("[EarnVM] Bridge address: \(bridgeInfo.bridgeAddress)")
-        print("[EarnVM] Amount: \(depositAmountDouble) ZEC")
+        // Log bridging mode
+        let isSimulated = bridgeInfo.isSimulated ?? true
+        let requiresFinalization = bridgeInfo.requiresFinalization
+        print("[EarnVM] Sending deposit to bridge:")
+        print("[EarnVM]   Mode: \(isSimulated ? "SIMULATED" : "REAL")")
+        print("[EarnVM]   Requires Finalization: \(requiresFinalization)")
+        print("[EarnVM]   Bridge Address: \(bridgeInfo.bridgeAddress)")
+        print("[EarnVM]   Amount: \(depositAmountDouble) ZEC")
+        if let nearAccount = bridgeInfo.nearAccountId {
+            print("[EarnVM]   NEAR Account: \(nearAccount)")
+        }
         
         do {
             let amountString = String(format: "%.8f", depositAmountDouble)
             
             // Create memo with pool info for tracking
-            let memoPrefix = isTestnet ? "TESTNET " : ""
-            let memo = "\(memoPrefix)RHEA deposit: \(selectedPool?.displayName ?? "Pool") | Intent: \(bridgeInfo.nearIntentId)"
+            let modePrefix = isSimulated ? "SIM " : ""
+            let memo = "\(modePrefix)RHEA deposit: \(selectedPool?.displayName ?? "Pool") | Intent: \(bridgeInfo.nearIntentId)"
             
             // Send ZEC to the bridge address
             _ = try await wallet.send(
@@ -355,8 +374,15 @@ final class EarnViewModel: ObservableObject {
             depositTransactionSent = true
             print("[EarnVM] ✓ Deposit transaction sent successfully")
             
-            // Automatically create the position record
+            // Create the position record
             await createPosition()
+            
+            // For real bridging, set pending finalization flag
+            if requiresFinalization {
+                pendingFinalization = true
+                print("[EarnVM] ⏳ Awaiting Zcash confirmation for finalization")
+                print("[EarnVM]   User must enter TX hash to finalize deposit")
+            }
             
         } catch {
             print("[EarnVM] ✗ Failed to send deposit: \(error)")
@@ -424,7 +450,10 @@ final class EarnViewModel: ObservableObject {
     }
     
     /// Finalize deposit after ZEC transaction is confirmed.
-    /// Currently only supported for future live bridge integrations.
+    /// 
+    /// This is required for real bridging (when `bridgeDepositInfo.requiresFinalization` is true).
+    /// The Zcash transaction must be confirmed on-chain before calling this.
+    /// The backend will verify the transaction and mint nZEC on the user's NEAR account.
     func finalizeDeposit() async {
         guard let bridgeInfo = bridgeDepositInfo,
               let depositArgs = bridgeInfo.depositArgs,
@@ -438,19 +467,30 @@ final class EarnViewModel: ObservableObject {
             return
         }
         
+        // Basic validation of tx hash format (should be 64 hex characters)
+        let cleanedTxHash = finalizationTxHash.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleanedTxHash.count == 64,
+              cleanedTxHash.allSatisfy({ $0.isHexDigit }) else {
+            errorMessage = "Invalid transaction hash format. Expected 64 hex characters."
+            return
+        }
+        
         isFinalizingDeposit = true
         errorMessage = nil
         
         print("[EarnVM] Finalizing deposit:")
         print("[EarnVM]   Position: \(positionId)")
-        print("[EarnVM]   TX Hash: \(finalizationTxHash)")
+        print("[EarnVM]   TX Hash: \(cleanedTxHash)")
         print("[EarnVM]   Vout: \(finalizationVout)")
+        if let nearAccount = bridgeInfo.nearAccountId {
+            print("[EarnVM]   NEAR Account: \(nearAccount)")
+        }
         
         do {
             let result = try await apiService.finalizeDeposit(
                 positionId: positionId,
                 userWalletAddress: zcashWalletAddress,
-                zcashTxHash: finalizationTxHash,
+                zcashTxHash: cleanedTxHash,
                 vout: finalizationVout,
                 depositArgs: depositArgs
             )
@@ -461,6 +501,9 @@ final class EarnViewModel: ObservableObject {
                 print("[EarnVM] ✓ Deposit finalized successfully!")
                 print("[EarnVM]   NEAR TX: \(result.nearTxHash ?? "N/A")")
                 print("[EarnVM]   nZEC Amount: \(result.nZecAmount ?? "N/A")")
+                if let explorerUrl = result.explorerUrl {
+                    print("[EarnVM]   Explorer: \(explorerUrl)")
+                }
                 
                 // Refresh positions and switch to positions tab
                 await loadPositions()
@@ -471,6 +514,7 @@ final class EarnViewModel: ObservableObject {
                 currentTab = .positions
             } else {
                 errorMessage = result.error ?? "Finalization failed. Please check the transaction hash and try again."
+                print("[EarnVM] ✗ Finalization failed: \(result.error ?? "Unknown error")")
             }
         } catch {
             print("[EarnVM] ✗ Finalization error: \(error)")

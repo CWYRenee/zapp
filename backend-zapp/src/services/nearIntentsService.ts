@@ -1,20 +1,19 @@
 /**
  * NEAR Intents Service
- * Handles Zcash  NEAR bridge address generation using SwapKit and internal
- * simulation helpers.
- * Integrates with RHEA Finance indexer/SDK for APY data and LP simulation.
+ * Handles Zcash <-> NEAR bridge address generation using:
+ * 1. OmniBridgeService (real bridging via omni-bridge-sdk) when ZCASH_API_KEY is configured
+ * 2. SwapKit (mainnet / testnet simulation) as fallback
+ * 3. Internal simulated data (development/testing) as last resort
  * 
- * Bridge sources (current implementation):
- * - SwapKit (mainnet / testnet simulation)
- * - Internal simulated data (development/testing)
+ * Integrates with RHEA Finance indexer/SDK for APY data and LP operations.
  * 
- * Flow (current implementation): Zcash  simulated bridge  simulated nZEC
- * on NEAR  simulated RHEA LP.
+ * Flow: Zcash -> OmniBridge -> nZEC on NEAR -> RHEA Finance LP
  */
 
-import { RefFinanceService } from './refFinanceService';
-import { refIndexerService } from './refIndexerService';
-import { swapKitService } from './swapKitService';
+import { RefFinanceService } from './refFinanceService.js';
+import { refIndexerService } from './refIndexerService.js';
+import { swapKitService } from './swapKitService.js';
+import { OmniBridgeService } from './omniBridgeService.js';
 import type { 
   BridgeTransaction, 
   BridgeDepositInfo, 
@@ -22,7 +21,7 @@ import type {
   LendingProtocolInfo,
   FinalizeDepositInput,
   FinalizeDepositResult,
-} from '../types/earn';
+} from '../types/earn.js';
 
 // Configuration
 const BRIDGE_FEE_PERCENT = 0.5;
@@ -52,10 +51,12 @@ export class NEARIntentsService {
   // ============================================================================
 
   /**
-   * Get bridge deposit address for ZEC  NEAR
+   * Get bridge deposit address for ZEC -> NEAR
    *
-   * Uses SwapKit when configured (handles mainnet and testnet simulation) and
-   * falls back to internal simulated data when unavailable.
+   * Priority order:
+   * 1. OmniBridgeService (real bridging via omni-bridge-sdk) when ZCASH_API_KEY is configured
+   * 2. SwapKit when configured (handles mainnet and testnet simulation)
+   * 3. Internal simulated data (development/testing)
    */
   static async getBridgeDepositAddress(
     userZcashAddress: string,
@@ -63,7 +64,58 @@ export class NEARIntentsService {
   ): Promise<BridgeDepositInfo> {
     const intentId = this.generateIntentId();
     
-    // Use SwapKit when configured (handles mainnet and testnet simulation)
+    // Priority 1: Use OmniBridgeService for real bridging when configured
+    if (OmniBridgeService.isConfigured()) {
+      try {
+        console.log('[NEARIntents] Using OmniBridgeService for real bridge deposit address');
+        
+        // Convert ZEC to zatoshis (1 ZEC = 100,000,000 zatoshis)
+        const amountZatoshis = BigInt(Math.floor(zecAmount * 100_000_000));
+        
+        const result = await OmniBridgeService.getDepositAddress(
+          userZcashAddress,
+          amountZatoshis,
+        );
+        
+        if (result.success && result.depositAddress) {
+          const bridgeFee = result.bridgeFeeInfo 
+            ? Number(result.bridgeFeeInfo.feeMin) / 100_000_000 
+            : zecAmount * (BRIDGE_FEE_PERCENT / 100);
+          const expectedAmount = zecAmount - bridgeFee;
+          
+          // Calculate min deposit in ZEC
+          const minDepositZec = result.minDepositZatoshis 
+            ? Number(result.minDepositZatoshis) / 100_000_000
+            : 0.0001;
+          
+          console.log(`[NEARIntents] ✓ Got real bridge deposit address: ${result.depositAddress}`);
+          console.log(`[NEARIntents]   NEAR Account: ${result.nearAccountId}`);
+          console.log(`[NEARIntents]   Min Deposit: ${minDepositZec} ZEC`);
+          
+          return {
+            bridgeAddress: result.depositAddress,
+            expectedAmount,
+            estimatedArrivalMinutes: ESTIMATED_BRIDGE_TIME_MINUTES,
+            bridgeFeePercent: BRIDGE_FEE_PERCENT,
+            nearIntentId: intentId,
+            isSimulated: false,
+            source: 'omni_bridge_sdk',
+            // Include deposit args for finalization (base64 encoded)
+            depositArgs: result.depositArgs 
+              ? Buffer.from(JSON.stringify(result.depositArgs)).toString('base64')
+              : undefined,
+            minDepositZec,
+            nearAccountId: result.nearAccountId,
+          };
+        } else {
+          console.warn('[NEARIntents] OmniBridgeService failed:', result.error);
+        }
+      } catch (error) {
+        console.error('[NEARIntents] OmniBridgeService error:', error);
+      }
+    }
+    
+    // Priority 2: Use SwapKit when configured (handles mainnet and testnet simulation)
     if (swapKitService.isConfigured()) {
       try {
         console.log('[NEARIntents] Using SwapKit for bridge deposit address');
@@ -94,7 +146,7 @@ export class NEARIntentsService {
       }
     }
     
-    // Final fallback to simulated data
+    // Priority 3: Final fallback to simulated data
     console.warn('[NEARIntents] Using fallback simulated bridge info');
     return this.getFallbackBridgeInfo(zecAmount, intentId);
   }
@@ -102,19 +154,63 @@ export class NEARIntentsService {
   /**
    * Finalize a deposit after ZEC has been sent and confirmed
    *
-   * Reserved for future bridge implementations that require explicit
-   * finalization. In the current simulation-only implementation this always
-   * returns an error.
+   * For real bridging (OmniBridgeService), this verifies the Zcash transaction
+   * and mints nZEC on NEAR.
    *
    * @param input - The finalization input including userWalletAddress (Zcash)
-   * @param depositArgs - The deposit args from the original deposit preparation
+   * @param depositArgs - The deposit args from the original deposit preparation (base64 encoded)
    */
-  static async finalizeDeposit(_input: FinalizeDepositInput, _depositArgs: string): Promise<FinalizeDepositResult> {
-    // In the current implementation we only support simulated deposits and do not
-    // perform real on-chain bridge finalization.
+  static async finalizeDeposit(input: FinalizeDepositInput, depositArgs: string): Promise<FinalizeDepositResult> {
+    // Check if real bridging is configured
+    if (OmniBridgeService.isConfigured()) {
+      try {
+        console.log('[NEARIntents] Finalizing deposit via OmniBridgeService');
+        console.log(`  User: ${input.userWalletAddress}`);
+        console.log(`  TX Hash: ${input.zcashTxHash}`);
+        console.log(`  Vout: ${input.vout}`);
+        
+        // Decode the deposit args from base64
+        const decodedArgs = JSON.parse(Buffer.from(depositArgs, 'base64').toString('utf-8'));
+        
+        const result = await OmniBridgeService.finalizeDeposit(
+          input.userWalletAddress,
+          input.zcashTxHash,
+          input.vout,
+          decodedArgs,
+        );
+        
+        if (result.success) {
+          const network = OmniBridgeService.getNetwork();
+          const explorerBase = network === 'testnet' 
+            ? 'https://testnet.nearblocks.io/txns/'
+            : 'https://nearblocks.io/txns/';
+          
+          return {
+            success: true,
+            nearTxHash: result.nearTxHash,
+            nZecAmount: result.nZecAmount,
+            explorerUrl: result.nearTxHash ? `${explorerBase}${result.nearTxHash}` : undefined,
+          };
+        } else {
+          return {
+            success: false,
+            error: result.error || 'Finalization failed',
+          };
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[NEARIntents] Finalization error:', message);
+        return {
+          success: false,
+          error: `Finalization failed: ${message}`,
+        };
+      }
+    }
+    
+    // Fallback: simulation mode does not support finalization
     return {
       success: false,
-      error: 'Deposit finalization is not supported in simulation mode',
+      error: 'Deposit finalization requires ZCASH_API_KEY to be configured for real bridging',
     };
   }
   
@@ -376,6 +472,9 @@ export class NEARIntentsService {
 
   /**
    * Deposit funds to earn yield on RHEA Finance pools
+   * 
+   * In real bridging mode, this executes the actual NEAR transaction to deposit
+   * nZEC into the selected RHEA Finance pool.
    */
   static async depositToPool(
     accountId: string,
@@ -387,10 +486,14 @@ export class NEARIntentsService {
     depositedAmount: number;
     currentApy: number;
   }> {
-    console.log(`[NEARIntents] (Simulated) Depositing ${amount} to RHEA Finance pool ${poolId} for account ${accountId}`);
+    const isRealBridging = OmniBridgeService.isConfigured();
+    const network = OmniBridgeService.getNetwork();
+    
+    console.log(`[NEARIntents] Depositing ${amount} to RHEA Finance pool ${poolId}`);
+    console.log(`[NEARIntents]   Account: ${accountId}`);
+    console.log(`[NEARIntents]   Mode: ${isRealBridging ? 'REAL' : 'SIMULATED'}`);
 
     const protocolInfo = await this.getRefProtocolInfo();
-
     let poolApy = protocolInfo.currentApy;
 
     // Try to refine APY using pool-specific data when poolId is numeric
@@ -399,14 +502,64 @@ export class NEARIntentsService {
       if (!Number.isNaN(parsed)) {
         const apyInfo = await RefFinanceService.getPoolApyEstimate(parsed);
         poolApy = apyInfo.apy;
-        console.log(`[NEARIntents] (Simulated) Pool ${poolId} APY estimate: ${poolApy}% (TVL: ${apyInfo.tvl})`);
+        console.log(`[NEARIntents]   Pool ${poolId} APY: ${poolApy.toFixed(2)}%`);
       }
     } catch (error) {
       console.error('[NEARIntents] Failed to get pool APY estimate:', error);
     }
 
-    // No real NEAR transaction is executed in the current implementation.
+    // Real bridging: Execute actual NEAR transaction
+    if (isRealBridging) {
+      try {
+        // Convert amount to zatoshis (nZEC has 8 decimals like ZEC)
+        const amountZatoshis = BigInt(Math.floor(amount * 100_000_000));
+        
+        // Parse pool ID
+        const poolIdNum = Number(poolId);
+        if (Number.isNaN(poolIdNum)) {
+          throw new Error(`Invalid pool ID: ${poolId}`);
+        }
+        
+        console.log(`[NEARIntents]   Executing real RHEA Finance deposit...`);
+        
+        // Execute the actual NEAR transactions to deposit to RHEA Finance
+        const result = await OmniBridgeService.depositToRheaPool(
+          accountId, // This is the Zcash address, will be mapped to NEAR account
+          poolIdNum,
+          amountZatoshis,
+        );
+        
+        if (!result.success) {
+          throw new Error(result.error || 'RHEA deposit failed');
+        }
+        
+        // Get the last transaction hash (the add_liquidity tx)
+        const txHash = result.txHashes[result.txHashes.length - 1] || 
+          `RHEA-${network.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+        
+        console.log(`[NEARIntents] ✓ RHEA Finance deposit complete!`);
+        console.log(`[NEARIntents]   TX Hashes: ${result.txHashes.join(', ')}`);
+        
+        return {
+          success: true,
+          nearTxHash: txHash,
+          depositedAmount: amount,
+          currentApy: poolApy,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`[NEARIntents] ✗ RHEA deposit failed: ${message}`);
+        return {
+          success: false,
+          depositedAmount: 0,
+          currentApy: poolApy,
+        };
+      }
+    }
+
+    // Simulated mode: No real NEAR transaction
     const simulatedHash = `SIM-NEAR-${Date.now().toString(36).toUpperCase()}`;
+    console.log(`[NEARIntents] (Simulated) Deposit hash: ${simulatedHash}`);
 
     return {
       success: true,

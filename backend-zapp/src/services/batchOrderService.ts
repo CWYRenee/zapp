@@ -1,13 +1,13 @@
-import { ZapOrder, type ZapOrderDocument } from '../models/ZapOrder';
-import { Merchant } from '../models/Merchant';
-import { RateService } from './rateService';
+import { ZapOrder, type ZapOrderDocument } from '../models/ZapOrder.js';
+import { Merchant } from '../models/Merchant.js';
+import { RateService } from './rateService.js';
 import {
   type CreateBatchOrderInput,
   type BatchOrderItemInput,
   type ZapOrderStatus,
   type StatusHistoryEntry,
-} from '../types/order';
-import type { PaymentRailType } from '../types/merchant';
+} from '../types/order.js';
+import type { PaymentRailType } from '../types/merchant.js';
 
 /** Timeout in milliseconds for grouped orders before they split into individuals */
 const GROUP_TIMEOUT_MS = 10_000; // 10 seconds

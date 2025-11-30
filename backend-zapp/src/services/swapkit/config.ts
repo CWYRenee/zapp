@@ -3,7 +3,7 @@
  * Handles testnet/mainnet configuration based on environment variables
  */
 
-import type { SwapKitEnvironment } from './types';
+import type { SwapKitEnvironment } from './types.js';
 
 // Environment variables
 const NEAR_ENV = process.env.NEAR_ENV || 'testnet';

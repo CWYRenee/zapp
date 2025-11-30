@@ -5,8 +5,9 @@
  * Flow: Zcash → NEAR Intents Bridge → RHEA Finance (LP/Swap) → Bridge → Shielded Zcash
  */
 
-import { EarnPosition, type EarnPositionDocument } from '../models/EarnPosition';
-import { NEARIntentsService } from './nearIntentsService';
+import { EarnPosition, type EarnPositionDocument } from '../models/EarnPosition.js';
+import { NEARIntentsService } from './nearIntentsService.js';
+import OmniBridgeService from './omniBridgeService.js';
 import {
   type EarnPositionStatus,
   type EarnStatusHistoryEntry,
@@ -17,7 +18,7 @@ import {
   type LendingProtocolInfo,
   type EarningsHistoryPoint,
   type UserEarnStats,
-} from '../types/earn';
+} from '../types/earn.js';
 
 export class EarnService {
   /**
@@ -120,13 +121,24 @@ export class EarnService {
     // Get bridge deposit info (SwapKit / simulated fallback)
     const bridgeInfo = await NEARIntentsService.getBridgeDepositAddress(userWalletAddress, zecAmount);
     
-    // Merge metadata with selected pool information (if provided)
-    const mergedMetadata: Record<string, unknown> | undefined = metadata || poolId
-      ? {
-          ...(metadata || {}),
-          ...(poolId ? { selectedPoolId: poolId } : {}),
-        }
-      : metadata;
+    // Build pending deposit info for the automated watcher
+    // This is stored in metadata and used by bridgeDepositWatcher
+    const pendingDeposit = {
+      bridgeAddress: bridgeInfo.bridgeAddress,
+      depositArgs: bridgeInfo.depositArgs || '',
+      nearAccountId: bridgeInfo.nearAccountId || '',
+      minDepositZec: bridgeInfo.minDepositZec || 0.001,
+      expectedAmount: bridgeInfo.expectedAmount,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Merge metadata with selected pool information and pending deposit
+    const mergedMetadata: Record<string, unknown> = {
+      ...(metadata || {}),
+      ...(poolId ? { selectedPoolId: poolId } : {}),
+      // Store pending deposit info for the watcher
+      pendingDeposit,
+    };
     
     // Create position
     const positionId = this.generatePositionId();
@@ -196,11 +208,9 @@ export class EarnService {
     
     console.log(`[EarnService] Bridge deposit received for ${positionId}`);
     
-    // Automatically trigger lending activation after bridge completes
-    // In production, this would be handled by a webhook from NEAR Intents
-    setTimeout(async () => {
-      await this.activateLending(positionId);
-    }, 5000); // Simulate bridge delay
+    // Note: For real bridging, activateLending is called immediately after finalization
+    // in earnRoutes.ts. The setTimeout below is only for simulated mode fallback.
+    // In production, this would be handled by a webhook from NEAR Intents.
     
     return position;
   }
@@ -327,7 +337,7 @@ export class EarnService {
   // ============================================================================
 
   /**
-   * Initiate withdrawal back to shielded Zcash
+   * Initiate withdrawal back to shielded Zcash (unified address)
    */
   static async initiateWithdrawal(input: InitiateWithdrawalInput): Promise<EarnPositionDocument | null> {
     const { positionId, userWalletAddress, withdrawToAddress, withdrawAll, partialAmount } = input;
@@ -339,57 +349,133 @@ export class EarnService {
       throw new Error('Position is not active for withdrawal');
     }
     
-    // Validate withdrawal address
+    // Validate withdrawal address (supports unified addresses)
     if (!NEARIntentsService.isValidZcashAddress(withdrawToAddress)) {
-      throw new Error('Invalid withdrawal address');
+      throw new Error('Invalid Zcash withdrawal address');
     }
     
-    // Calculate withdrawal amount
+    // Calculate withdrawal amount in ZEC
     const withdrawAmount = withdrawAll ? position.currentValue : (partialAmount || position.currentValue);
     
     if (withdrawAmount > position.currentValue) {
       throw new Error('Withdrawal amount exceeds available balance');
     }
     
-    // In the current implementation we simulate LP withdrawals and do not use a real NEAR account.
-    const accountId = position.userWalletAddress;
+    console.log(`[EarnService] Initiating withdrawal for ${positionId}:`);
+    console.log(`  Amount: ${withdrawAmount} ZEC`);
+    console.log(`  To: ${withdrawToAddress}`);
+    
+    // Step 1: Withdraw from RHEA Finance pool
     const refResult = await NEARIntentsService.withdrawFromPool(
-      accountId,
+      userWalletAddress,
       withdrawAmount,
     );
     
     if (!refResult.success) {
-      throw new Error('Failed to withdraw from RHEA Finance');
+      throw new Error('Failed to withdraw from RHEA Finance pool');
     }
     
-    // Create withdrawal bridge transaction
-    const bridgeTx = await NEARIntentsService.initiateBridgeToZcash(
+    // Step 2: Initiate bridge withdrawal via OmniBridge
+    const amountZatoshis = BigInt(Math.floor(refResult.withdrawnAmount * 100_000_000));
+    const bridgeResult = await OmniBridgeService.initiateWithdrawal(
+      userWalletAddress,
       withdrawToAddress,
-      refResult.withdrawnAmount,
+      amountZatoshis,
     );
     
-    position.withdrawalBridgeTx = bridgeTx;
+    if (!bridgeResult.success) {
+      throw new Error(`Failed to initiate bridge withdrawal: ${bridgeResult.error}`);
+    }
+    
+    // Update position with withdrawal info
+    const withdrawalTx: any = {
+      bridgeTxId: bridgeResult.pendingId || `WD-${Date.now().toString(36)}`,
+      direction: 'near_to_zcash',
+      status: 'pending',
+      sourceAddress: position.lendingPosition?.nearAccountId || userWalletAddress,
+      destinationAddress: withdrawToAddress,
+      zecAmount: refResult.withdrawnAmount,
+      nearAmount: refResult.withdrawnAmount,
+      nearIntentId: bridgeResult.pendingId || '',
+      createdAt: new Date(),
+    };
+    if (bridgeResult.nearTxHash) {
+      withdrawalTx.nearTxHash = bridgeResult.nearTxHash;
+    }
+    position.withdrawalBridgeTx = withdrawalTx;
     position.withdrawToAddress = withdrawToAddress;
     position.withdrawalInitiatedAt = new Date();
     position.status = 'bridging_to_zcash';
     
+    // Store pending withdrawal info for watcher
+    position.metadata = {
+      ...(position.metadata || {}),
+      pendingWithdrawal: {
+        pendingId: bridgeResult.pendingId,
+        nearTxHash: bridgeResult.nearTxHash,
+        targetAddress: withdrawToAddress,
+        amountZatoshis: amountZatoshis.toString(),
+        initiatedAt: new Date().toISOString(),
+        estimatedCompletionMinutes: bridgeResult.estimatedCompletionMinutes,
+      },
+    };
+    
     this.appendStatus(
       position,
       'bridging_to_zcash',
-      `Withdrawing ${withdrawAmount} ZEC to shielded wallet`,
-      refResult.nearTxHash,
+      `Withdrawing ${withdrawAmount.toFixed(6)} ZEC to ${withdrawToAddress.slice(0, 20)}...`,
+      bridgeResult.nearTxHash,
     );
     
     await position.save();
     
-    console.log(`[EarnService] Withdrawal initiated for ${positionId}`);
-    
-    // Simulate bridge completion
-    setTimeout(async () => {
-      await this.markCompleted(positionId, `ZEC-${Date.now().toString(36).toUpperCase()}`, withdrawAmount);
-    }, 5000);
+    console.log(`[EarnService] ✓ Withdrawal initiated for ${positionId}`);
+    console.log(`  Pending ID: ${bridgeResult.pendingId}`);
+    console.log(`  Est. completion: ${bridgeResult.estimatedCompletionMinutes} minutes`);
     
     return position;
+  }
+
+  /**
+   * Process withdrawal signing and finalization (called by watcher or manually)
+   */
+  static async processWithdrawal(positionId: string): Promise<EarnPositionDocument | null> {
+    const position = await EarnPosition.findOne({ positionId });
+    if (!position) return null;
+    
+    if (position.status !== 'bridging_to_zcash') {
+      return position;
+    }
+    
+    const pendingWithdrawal = (position.metadata as any)?.pendingWithdrawal;
+    if (!pendingWithdrawal?.nearTxHash) {
+      console.warn(`[EarnService] No pending withdrawal data for ${positionId}`);
+      return position;
+    }
+    
+    try {
+      // Finalize the withdrawal (bridge handles signing internally)
+      const finalizeResult = await OmniBridgeService.finalizeWithdrawal(
+        position.userWalletAddress,
+        pendingWithdrawal.nearTxHash,
+      );
+      
+      if (!finalizeResult.success) {
+        console.warn(`[EarnService] Withdrawal finalization pending for ${positionId}: ${finalizeResult.error}`);
+        return position;
+      }
+      
+      // Mark as completed
+      return await this.markCompleted(
+        positionId,
+        finalizeResult.zcashTxHash || '',
+        position.withdrawalBridgeTx?.zecAmount,
+      );
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[EarnService] Withdrawal processing failed for ${positionId}: ${msg}`);
+      return position;
+    }
   }
 
   /**
@@ -471,6 +557,8 @@ export class EarnService {
       currentApy: position.currentApy,
       depositedAt: position.lendingStartedAt,
       lastUpdatedAt: position.updatedAt,
+      completedAt: position.completedAt,
+      withdrawToAddress: position.withdrawToAddress,
     };
   }
 

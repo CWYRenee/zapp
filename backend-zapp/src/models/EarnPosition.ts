@@ -6,7 +6,7 @@ import {
   type EarnStatusHistoryEntry,
   type BridgeTransaction,
   type LendingPosition,
-} from '../types/earn';
+} from '../types/earn.js';
 
 /**
  * Earn Position Document

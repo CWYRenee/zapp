@@ -131,62 +131,18 @@ struct PositionCard: View {
                     
                     Spacer()
                     
-                    // APY
-                    if position.status.isActive {
-                        Text(String(format: "%.2f%% APY", position.currentApy))
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(ZapColors.primary)
-                            .padding(.horizontal, ZapSpacing.sm)
-                            .padding(.vertical, 2)
-                            .background(ZapColors.primary.opacity(0.1))
-                            .cornerRadius(ZapRadius.small)
-                    }
+                    // Right side info based on status
+                    rightSideInfo
                 }
                 
                 // Values
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Current Value")
-                            .font(.caption)
-                            .foregroundColor(ZapColors.textSecondary)
-                        Text(String(format: "%.6f ZEC", position.currentValue))
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(ZapColors.textPrimary)
-                    }
-                    
-                    Spacer()
-                    
-                    if position.accruedEarnings > 0 {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("Earnings")
-                                .font(.caption)
-                                .foregroundColor(ZapColors.textSecondary)
-                            Text(String(format: "+%.6f", position.accruedEarnings))
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
+                valueDisplay
                 
-                // Progress (for in-progress statuses)
-                if position.status.isInProgress {
-                    progressIndicator
-                }
+                // Status-specific content
+                statusContent
                 
                 // Footer
-                HStack {
-                    Text("Deposited: \(String(format: "%.4f ZEC", position.zecDeposited))")
-                        .font(.caption)
-                        .foregroundColor(ZapColors.textSecondary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(ZapColors.textSecondary)
-                }
+                footerInfo
             }
             .padding(ZapSpacing.md)
             .background(Color(.secondarySystemBackground))
@@ -195,11 +151,18 @@ struct PositionCard: View {
         .buttonStyle(.plain)
     }
     
+    // MARK: - Status Badge
+    
     private var statusBadge: some View {
         HStack(spacing: 4) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
+            if position.status.isInProgress {
+                ProgressView()
+                    .scaleEffect(0.6)
+            } else {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+            }
             
             Text(position.status.displayName)
                 .font(.caption)
@@ -207,6 +170,122 @@ struct PositionCard: View {
                 .foregroundColor(statusColor)
         }
     }
+    
+    // MARK: - Right Side Info
+    
+    @ViewBuilder
+    private var rightSideInfo: some View {
+        switch position.status {
+        case .lendingActive:
+            Text(String(format: "%.2f%% APY", position.currentApy))
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(ZapColors.primary)
+                .padding(.horizontal, ZapSpacing.sm)
+                .padding(.vertical, 2)
+                .background(ZapColors.primary.opacity(0.1))
+                .cornerRadius(ZapRadius.small)
+        case .completed:
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.blue)
+                Text("Completed")
+                    .foregroundColor(.blue)
+            }
+            .font(.caption)
+            .fontWeight(.medium)
+        default:
+            EmptyView()
+        }
+    }
+    
+    // MARK: - Value Display
+    
+    private var valueDisplay: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(position.status == .completed ? "Final Value" : "Current Value")
+                    .font(.caption)
+                    .foregroundColor(ZapColors.textSecondary)
+                Text(String(format: "%.6f ZEC", position.currentValue))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(ZapColors.textPrimary)
+            }
+            
+            Spacer()
+            
+            // Show earnings for active/completed
+            if position.accruedEarnings > 0 && (position.status.isActive || position.status == .completed) {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(position.status == .completed ? "Total Earned" : "Earnings")
+                        .font(.caption)
+                        .foregroundColor(ZapColors.textSecondary)
+                    Text(String(format: "+%.6f", position.accruedEarnings))
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.green)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Status Content
+    
+    @ViewBuilder
+    private var statusContent: some View {
+        switch position.status {
+        case .pendingDeposit:
+            progressRow( text: "Waiting for ZEC deposit...", color: .orange)
+        case .bridgingToNear:
+            progressRow( text: "Bridging to NEAR...", color: .orange)
+        case .bridgingToZcash:
+            progressRow(text: "Withdrawing to Zcash...", color: .orange)
+        case .completed:
+            if let completedAt = position.completedAt {
+                HStack(spacing: ZapSpacing.xs) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(ZapColors.textSecondary)
+                    Text("Completed \(formatRelativeDate(completedAt))")
+                        .font(.caption)
+                        .foregroundColor(ZapColors.textSecondary)
+                }
+            }
+        case .failed:
+            progressRow( text: "Transaction failed", color: .red)
+        default:
+            EmptyView()
+        }
+    }
+    
+    private func progressRow(icon: String, text: String, color: Color) -> some View {
+        HStack(spacing: ZapSpacing.sm) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.caption)
+            Text(text)
+                .font(.caption)
+                .foregroundColor(ZapColors.textSecondary)
+        }
+        .padding(.vertical, ZapSpacing.xs)
+    }
+    
+    // MARK: - Footer Info
+    
+    private var footerInfo: some View {
+        HStack {
+            Text("Deposited: \(String(format: "%.4f ZEC", position.zecDeposited))")
+                .font(.caption)
+                .foregroundColor(ZapColors.textSecondary)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(ZapColors.textSecondary)
+        }
+    }
+    
+    // MARK: - Helpers
     
     private var statusColor: Color {
         switch position.status {
@@ -221,16 +300,10 @@ struct PositionCard: View {
         }
     }
     
-    private var progressIndicator: some View {
-        HStack(spacing: ZapSpacing.sm) {
-            ProgressView()
-                .scaleEffect(0.8)
-            
-            Text("Processing...")
-                .font(.caption)
-                .foregroundColor(ZapColors.textSecondary)
-        }
-        .padding(.vertical, ZapSpacing.xs)
+    private func formatRelativeDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 
@@ -260,9 +333,11 @@ struct PositionDetailSheet: View {
                     // Details Section
                     detailsSection
                     
-                    // Actions
+                    // Actions based on status
                     if position.status.isActive {
                         actionsSection
+                    } else if position.status == .completed {
+                        completedSection
                     }
                     
                     Spacer(minLength: ZapSpacing.xl)
@@ -302,41 +377,113 @@ struct PositionDetailSheet: View {
     // MARK: - Status Header
     
     private var statusHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Status")
-                    .font(.caption)
-                    .foregroundColor(ZapColors.textSecondary)
-                
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 10, height: 10)
-                    
-                    Text(position.status.displayName)
-                        .font(.headline)
-                        .foregroundColor(ZapColors.textPrimary)
-                }
-            }
-            
-            Spacer()
-            
-            if position.status.isActive {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Current APY")
+        VStack(spacing: ZapSpacing.sm) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Status")
                         .font(.caption)
                         .foregroundColor(ZapColors.textSecondary)
                     
-                    Text(String(format: "%.2f%%", position.currentApy))
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(ZapColors.primary)
+                    HStack(spacing: 6) {
+                        if position.status.isInProgress {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else {
+                            Circle()
+                                .fill(statusColor)
+                                .frame(width: 10, height: 10)
+                        }
+                        
+                        Text(position.status.displayName)
+                            .font(.headline)
+                            .foregroundColor(ZapColors.textPrimary)
+                    }
                 }
+                
+                Spacer()
+                
+                // Right side based on status
+                statusHeaderRight
+            }
+            
+            // Status-specific message
+            if let message = statusMessage {
+                HStack(spacing: ZapSpacing.xs) {
+                    Image(systemName: statusMessageIcon)
+                        .foregroundColor(statusColor)
+                    Text(message)
+                        .font(.caption)
+                        .foregroundColor(ZapColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(ZapSpacing.sm)
+                .background(statusColor.opacity(0.1))
+                .cornerRadius(ZapRadius.small)
             }
         }
         .padding(ZapSpacing.md)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(ZapRadius.medium)
+    }
+    
+    @ViewBuilder
+    private var statusHeaderRight: some View {
+        switch position.status {
+        case .lendingActive:
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Current APY")
+                    .font(.caption)
+                    .foregroundColor(ZapColors.textSecondary)
+                
+                Text(String(format: "%.2f%%", position.currentApy))
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(ZapColors.primary)
+            }
+        case .completed:
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("Total Return")
+                    .font(.caption)
+                    .foregroundColor(ZapColors.textSecondary)
+                
+                Text(String(format: "+%.2f%%", position.earningsPercent))
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(.green)
+            }
+        default:
+            EmptyView()
+        }
+    }
+    
+    private var statusMessage: String? {
+        switch position.status {
+        case .pendingDeposit:
+            return "Waiting for your ZEC deposit to be confirmed"
+        case .bridgingToNear:
+            return "Your ZEC is being bridged to NEAR. This may take a few minutes."
+        case .bridgingToZcash:
+            return "Withdrawing funds back to your Zcash wallet"
+        case .completed:
+            return "Funds successfully returned to your shielded wallet"
+        case .failed:
+            return "Transaction failed. Please contact support."
+        default:
+            return nil
+        }
+    }
+    
+    private var statusMessageIcon: String {
+        switch position.status {
+        case .pendingDeposit, .bridgingToNear, .bridgingToZcash:
+            return "clock.fill"
+        case .completed:
+            return "checkmark.circle.fill"
+        case .failed:
+            return "exclamationmark.triangle.fill"
+        default:
+            return "info.circle.fill"
+        }
     }
     
     private var statusColor: Color {
@@ -477,6 +624,53 @@ struct PositionDetailSheet: View {
                 .font(.caption)
                 .foregroundColor(ZapColors.textSecondary)
                 .multilineTextAlignment(.center)
+        }
+    }
+    
+    // MARK: - Completed Section
+    
+    private var completedSection: some View {
+        VStack(alignment: .leading, spacing: ZapSpacing.sm) {
+            Text("Withdrawal Complete")
+                .font(.headline)
+                .foregroundColor(ZapColors.textPrimary)
+            
+            VStack(spacing: ZapSpacing.sm) {
+                HStack(spacing: ZapSpacing.sm) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.title2)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Funds Returned")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(ZapColors.textPrimary)
+                        Text(String(format: "%.6f ZEC sent to your wallet", position.currentValue))
+                            .font(.caption)
+                            .foregroundColor(ZapColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                }
+                
+                if let completedAt = position.completedAt {
+                    Divider()
+                    
+                    HStack {
+                        Text("Completed")
+                            .font(.caption)
+                            .foregroundColor(ZapColors.textSecondary)
+                        Spacer()
+                        Text(formatDate(completedAt))
+                            .font(.caption)
+                            .foregroundColor(ZapColors.textPrimary)
+                    }
+                }
+            }
+            .padding(ZapSpacing.md)
+            .background(Color.green.opacity(0.1))
+            .cornerRadius(ZapRadius.medium)
         }
     }
 }

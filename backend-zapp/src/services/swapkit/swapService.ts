@@ -7,9 +7,9 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
-import { getSwapKitEnvironment } from './config';
-import type { SwapQuoteRequest, SwapQuoteResponse, SwapRoute, BridgeDepositInfo } from './types';
-import { SWAP_PROVIDERS } from './types';
+import { getSwapKitEnvironment } from './config.js';
+import type { SwapQuoteRequest, SwapQuoteResponse, SwapRoute, BridgeDepositInfo } from './types.js';
+import { SWAP_PROVIDERS } from './types.js';
 
 // SwapKit API configuration
 const SWAPKIT_API_URL = 'https://api.swapkit.dev';

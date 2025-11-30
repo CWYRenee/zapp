@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { MerchantAuthService } from '../services/merchantAuthService';
+import { MerchantAuthService } from '../services/merchantAuthService.js';
 
 const router = Router();
 

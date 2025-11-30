@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
-import { BatchOrderService } from '../services/batchOrderService';
-import type { BatchOrderItemInput, CreateBatchOrderInput } from '../types/order';
-import type { PaymentRailType } from '../types/merchant';
+import { BatchOrderService } from '../services/batchOrderService.js';
+import type { BatchOrderItemInput, CreateBatchOrderInput } from '../types/order.js';
+import type { PaymentRailType } from '../types/merchant.js';
 
 const router = Router();
 

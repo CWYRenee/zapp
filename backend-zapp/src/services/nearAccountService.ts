@@ -148,22 +148,22 @@ export async function createNearAccount(zcashAddress: string): Promise<AccountCr
     console.log(`[NearAccount] Creating account: ${accountId}`);
     
     if (isTestnet) {
-      // Testnet: Use faucet to create and fund account
-      const { stdout, stderr } = await execAsync(
-        `near account create-account fund-myself ${accountId} '1 NEAR' autogenerate-new-keypair save-to-keychain network-config testnet create`,
-        { timeout: 60000 } // 60 second timeout
-      );
+      // Testnet: Use faucet service to create and fund account (free on testnet)
+      const cmd = `near account create-account sponsor-by-faucet-service ${accountId} autogenerate-new-keypair save-to-legacy-keychain network-config testnet create`;
+      console.log('[NearAccount] Running:', cmd);
+      
+      const { stdout, stderr } = await execAsync(cmd, { timeout: 60000 });
       
       console.log('[NearAccount] CLI output:', stdout);
       if (stderr) {
         console.warn('[NearAccount] CLI stderr:', stderr);
       }
     } else {
-      // Mainnet: Just generate keypair, user needs to fund manually
-      const { stdout, stderr } = await execAsync(
-        `near account create-account fund-later use-auto-generation save-to-keychain ${accountId}`,
-        { timeout: 30000 }
-      );
+      // Mainnet: Create implicit account (fund later)
+      const cmd = `near account create-account fund-later autogenerate-new-keypair save-to-legacy-keychain network-config mainnet create`;
+      console.log('[NearAccount] Running:', cmd);
+      
+      const { stdout, stderr } = await execAsync(cmd, { timeout: 30000 });
       
       console.log('[NearAccount] CLI output:', stdout);
       if (stderr) {

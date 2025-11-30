@@ -3,7 +3,7 @@
  * Integrates with SwapKit API for cross-chain bridging via NEAR provider
  * 
  * This is a backward-compatible wrapper around the new modular SwapKit service.
- * For new code, prefer importing from './swapkit' directly.
+ * For new code, prefer importing from './swapkit.js' directly.
  * 
  * Features:
  * - Mainnet: Uses SwapKit HTTP API (https://api.swapkit.dev)
@@ -11,7 +11,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
-import { getSwapService, isTestnet } from './swapkit';
+import { getSwapService, isTestnet } from './swapkit/index.js';
 
 // SwapKit API configuration
 const SWAPKIT_BASE_URL = 'https://api.swapkit.dev';

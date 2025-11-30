@@ -1,5 +1,5 @@
 import { Schema, model, type Document } from 'mongoose';
-import type { PaymentRailConfig, PaymentRailType } from '../types/merchant';
+import type { PaymentRailConfig, PaymentRailType } from '../types/merchant.js';
 
 export interface MerchantDocument extends Document {
   email: string;

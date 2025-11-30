@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
-import { OrderService } from '../services/orderService';
-import type { ZapOrderStatus, CreateOrderInput } from '../types/order';
+import { OrderService } from '../services/orderService.js';
+import type { ZapOrderStatus, CreateOrderInput } from '../types/order.js';
 
 const router = Router();
 

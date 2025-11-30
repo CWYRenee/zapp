@@ -7,7 +7,7 @@
  * testnet simulation capabilities.
  */
 
-import { isTestnetEnvironment, logSwapKitConfig } from './config';
+import { isTestnetEnvironment, logSwapKitConfig } from './config.js';
 
 // Supported chain identifiers
 export const Chain = {

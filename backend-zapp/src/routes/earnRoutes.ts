@@ -4,10 +4,11 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { EarnService } from '../services/earnService';
-import { NEARIntentsService } from '../services/nearIntentsService';
-import { refIndexerService } from '../services/refIndexerService';
-import type { EarnPositionStatus, CreateEarnPositionInput, InitiateWithdrawalInput } from '../types/earn';
+import { EarnService } from '../services/earnService.js';
+import { NEARIntentsService } from '../services/nearIntentsService.js';
+import { OmniBridgeService } from '../services/omniBridgeService.js';
+import { refIndexerService } from '../services/refIndexerService.js';
+import type { EarnPositionStatus, CreateEarnPositionInput, InitiateWithdrawalInput } from '../types/earn.js';
 
 const router = Router();
 
@@ -68,9 +69,19 @@ router.get('/bridge/health', async (_req: Request, res: Response) => {
   try {
     const health = await NEARIntentsService.getBridgeHealth();
     
+    // Include bridge configuration info
+    const isRealBridgeConfigured = OmniBridgeService.isConfigured();
+    const network = OmniBridgeService.getNetwork();
+    
     return res.status(200).json({
       success: true,
-      bridge: health,
+      bridge: {
+        ...health,
+        // Bridge mode info
+        mode: isRealBridgeConfigured ? 'real' : 'simulated',
+        network,
+        nZecToken: isRealBridgeConfigured ? OmniBridgeService.getNZecTokenAddress() : undefined,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to get bridge health';
@@ -100,7 +111,7 @@ router.post('/bridge/quote', async (req: Request, res: Response) => {
     }
     
     // Use SwapKit service to get quote (handles testnet simulation)
-    const { getSwapService } = await import('../services/swapkit');
+    const { getSwapService } = await import('../services/swapkit/index.js');
     const swapService = getSwapService();
     
     const quote = await swapService.getZecToNearQuote({
@@ -190,9 +201,11 @@ router.get('/tokens/prices', async (_req: Request, res: Response) => {
  * 
  * Response includes:
  * - bridgeAddress: The Zcash address to send funds to
- * - depositArgs: Optional opaque payload reserved for future bridge finalization
- * - isSimulated: Whether this is a testnet simulation
- * - source: Where the address came from (swapkit_api, testnet_simulation, fallback)
+ * - depositArgs: Opaque payload for bridge finalization (required for real bridging)
+ * - isSimulated: Whether this is a testnet simulation (false for real bridging)
+ * - source: Where the address came from (omni_bridge_sdk, swapkit_api, testnet_simulation, fallback)
+ * - requiresFinalization: Whether explicit finalization is needed (true for real bridging)
+ * - nearAccountId: NEAR account associated with the deposit (for real bridging)
  */
 router.post('/deposit/prepare', async (req: Request, res: Response) => {
   try {
@@ -211,6 +224,14 @@ router.post('/deposit/prepare', async (req: Request, res: Response) => {
       Number(zec_amount),
     );
     
+    // Determine if finalization is required (real bridging via omni-bridge-sdk)
+    const requiresFinalization = bridgeInfo.source === 'omni_bridge_sdk' && !bridgeInfo.isSimulated;
+    
+    // Prepare instructions based on bridge mode
+    const instructions = requiresFinalization
+      ? `Send ${zec_amount} ZEC to the bridge address. After the transaction confirms, you'll need to finalize the deposit to receive nZEC on NEAR.`
+      : `Send ${zec_amount} ZEC to the bridge address to start earning on RHEA`;
+    
     return res.status(200).json({
       success: true,
       deposit: {
@@ -219,15 +240,20 @@ router.post('/deposit/prepare', async (req: Request, res: Response) => {
         estimatedArrivalMinutes: bridgeInfo.estimatedArrivalMinutes,
         bridgeFeePercent: bridgeInfo.bridgeFeePercent,
         nearIntentId: bridgeInfo.nearIntentId,
-        // Additional bridge metadata
+        // Bridge mode indicators
         isSimulated: bridgeInfo.isSimulated,
         source: bridgeInfo.source,
+        // Real bridging data
         depositArgs: bridgeInfo.depositArgs,
         minDepositZec: bridgeInfo.minDepositZec,
+        nearAccountId: bridgeInfo.nearAccountId,
+        requiresFinalization,
       },
-      instructions: `Send ${zec_amount} ZEC to the bridge address to start earning on RHEA`,
-      // Finalization is not supported in the current simulation-only implementation
-      requiresFinalization: false,
+      instructions,
+      requiresFinalization,
+      // Bridge configuration info
+      bridgeMode: OmniBridgeService.isConfigured() ? 'real' : 'simulated',
+      network: OmniBridgeService.getNetwork(),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to prepare deposit';
@@ -283,8 +309,7 @@ router.post('/deposit/finalize', async (req: Request, res: Response) => {
       });
     }
     
-    // Update position status to bridging_to_near or lending_active
-    // Pass the actual minted nZEC amount from the bridge (if available)
+    // Update position status and record bridge transaction
     const nearAmountFromBridge = result.nZecAmount ? Number(result.nZecAmount) : undefined;
     await EarnService.markBridgeDepositReceived(
       String(position_id),
@@ -292,12 +317,28 @@ router.post('/deposit/finalize', async (req: Request, res: Response) => {
       nearAmountFromBridge,
     );
     
+    // For real bridging, immediately activate lending (deposit to RHEA pool)
+    // The nZEC is already minted, so we can deposit right away
+    console.log(`[EarnRoutes] Activating lending for position ${position_id}...`);
+    const activatedPosition = await EarnService.activateLending(String(position_id));
+    
+    if (!activatedPosition || activatedPosition.status !== 'lending_active') {
+      console.warn(`[EarnRoutes] Lending activation may have failed for ${position_id}`);
+    } else {
+      console.log(`[EarnRoutes] ✓ Lending activated! APY: ${activatedPosition.currentApy}%`);
+    }
+    
     return res.status(200).json({
       success: true,
       nearTxHash: result.nearTxHash,
       nZecAmount: result.nZecAmount,
       explorerUrl: result.explorerUrl,
-      message: 'Deposit finalized! nZEC has been minted on NEAR.',
+      lendingActivated: activatedPosition?.status === 'lending_active',
+      currentApy: activatedPosition?.currentApy,
+      poolId: activatedPosition?.poolId,
+      message: activatedPosition?.status === 'lending_active'
+        ? `Deposit finalized and deposited to RHEA Finance at ${activatedPosition.currentApy?.toFixed(2)}% APY!`
+        : 'Deposit finalized! nZEC has been minted on NEAR.',
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to finalize deposit';
@@ -638,6 +679,138 @@ router.post('/positions/:positionId/completed', async (req: Request, res: Respon
     return res.status(400).json({
       success: false,
       error: 'Bad Request',
+      message,
+    });
+  }
+});
+
+// ============================================================================
+// DEPOSIT WATCHER ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/zapp/earn/watcher/status
+ * Get the status of the deposit watcher background job
+ */
+router.get('/watcher/status', async (_req: Request, res: Response) => {
+  try {
+    const { getJobsStatus } = await import('../jobs/index.js');
+    const status = getJobsStatus();
+    
+    return res.status(200).json({
+      success: true,
+      watcher: status.depositWatcher,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to get watcher status';
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+      message,
+    });
+  }
+});
+
+/**
+ * POST /api/zapp/earn/watcher/check/:positionId
+ * Manually trigger a deposit check for a specific position
+ */
+router.post('/watcher/check/:positionId', async (req: Request, res: Response) => {
+  try {
+    const { positionId } = req.params;
+    const { bridgeDepositWatcher } = await import('../services/bridgeDepositWatcher.js');
+    
+    const result = await bridgeDepositWatcher.checkPosition(positionId);
+    
+    return res.status(200).json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to check position';
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+      message,
+    });
+  }
+});
+
+// ============================================================================
+// WITHDRAWAL ENDPOINTS
+// ============================================================================
+
+/**
+ * GET /api/zapp/earn/withdrawal/fee
+ * Get withdrawal fee estimate
+ */
+router.get('/withdrawal/fee', async (req: Request, res: Response) => {
+  try {
+    const { amount } = req.query;
+    
+    if (!amount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Bad Request',
+        message: 'amount query parameter is required',
+      });
+    }
+    
+    const amountZec = Number(amount);
+    const amountZatoshis = BigInt(Math.floor(amountZec * 100_000_000));
+    
+    const OmniBridgeService = (await import('../services/omniBridgeService.js')).default;
+    const feeInfo = await OmniBridgeService.getWithdrawalFee(amountZatoshis);
+    
+    return res.status(200).json({
+      success: true,
+      fee: {
+        amountZec,
+        feeZec: Number(feeInfo.feeZatoshis) / 100_000_000,
+        netAmountZec: Number(feeInfo.netAmountZatoshis) / 100_000_000,
+        feePercent: feeInfo.feePercent,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to get fee estimate';
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+      message,
+    });
+  }
+});
+
+/**
+ * POST /api/zapp/earn/positions/:positionId/process-withdrawal
+ * Process a pending withdrawal (sign and finalize)
+ */
+router.post('/positions/:positionId/process-withdrawal', async (req: Request, res: Response) => {
+  try {
+    const { positionId } = req.params;
+    
+    const position = await EarnService.processWithdrawal(positionId);
+    
+    if (!position) {
+      return res.status(404).json({
+        success: false,
+        error: 'Not Found',
+        message: 'Position not found',
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      position: EarnService.getPositionSummary(position),
+      message: position.status === 'completed' 
+        ? 'Withdrawal completed! Funds sent to your Zcash address.'
+        : 'Withdrawal processing in progress.',
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to process withdrawal';
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
       message,
     });
   }

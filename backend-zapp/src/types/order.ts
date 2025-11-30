@@ -1,4 +1,4 @@
-import type { PaymentRailType } from './merchant';
+import type { PaymentRailType } from './merchant.js';
 
 export const ZAP_ORDER_STATUSES = [
   'pending',

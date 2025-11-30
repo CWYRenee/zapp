@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const adminKey = req.header('X-Admin-Key') ?? req.header('x-admin-key');

@@ -117,6 +117,8 @@ export interface EarnPositionSummary {
   currentApy: number;
   depositedAt?: Date | undefined;
   lastUpdatedAt: Date;
+  completedAt?: Date | undefined;
+  withdrawToAddress?: string | undefined;
 }
 
 /**
@@ -130,15 +132,19 @@ export interface BridgeDepositInfo {
   nearIntentId: string;
   /** Whether this is a simulated testnet address (not real) */
   isSimulated: boolean;
-  /** Source of the bridge address (SwapKit, testnet simulation, or fallback) */
-  source: 'swapkit_api' | 'testnet_simulation' | 'fallback';
+  /** Source of the bridge address */
+  source: 'omni_bridge_sdk' | 'swapkit_api' | 'testnet_simulation' | 'fallback';
   /** 
-   * Optional opaque payload reserved for future bridge finalization.
-   * Not used in the current simulation-only implementation.
+   * Opaque payload for bridge finalization (base64 encoded JSON).
+   * Required for real bridging via omni-bridge-sdk.
    */
-  depositArgs?: string;
+  depositArgs?: string | undefined;
   /** Minimum deposit amount in ZEC */
-  minDepositZec?: number;
+  minDepositZec?: number | undefined;
+  /** NEAR account ID associated with this deposit (for real bridging) */
+  nearAccountId?: string | undefined;
+  /** Whether this deposit requires explicit finalization */
+  requiresFinalization?: boolean | undefined;
 }
 
 /**
@@ -162,13 +168,13 @@ export interface FinalizeDepositResult {
   /** Whether finalization was successful */
   success: boolean;
   /** NEAR transaction hash */
-  nearTxHash?: string;
+  nearTxHash?: string | undefined;
   /** Amount of nZEC received */
-  nZecAmount?: string;
+  nZecAmount?: string | undefined;
   /** Error message if failed */
-  error?: string;
+  error?: string | undefined;
   /** Explorer URL for NEAR tx */
-  explorerUrl?: string;
+  explorerUrl?: string | undefined;
 }
 
 /**

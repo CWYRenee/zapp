@@ -1,9 +1,9 @@
 import { Router, type Response } from 'express';
-import { requireMerchantAuth, type AuthenticatedRequest } from '../middleware/merchantAuth';
-import { ZapOrder } from '../models/ZapOrder';
-import { OrderService } from '../services/orderService';
-import type { PaymentRailConfig } from '../types/merchant';
-import type { ZapOrderStatus } from '../types/order';
+import { requireMerchantAuth, type AuthenticatedRequest } from '../middleware/merchantAuth.js';
+import { ZapOrder } from '../models/ZapOrder.js';
+import { OrderService } from '../services/orderService.js';
+import type { PaymentRailConfig } from '../types/merchant.js';
+import type { ZapOrderStatus } from '../types/order.js';
 
 const router = Router();
 

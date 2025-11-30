@@ -13,7 +13,7 @@ export {
   getZcashConfig,
   getNearConfig,
   logSwapKitConfig,
-} from './config';
+} from './config.js';
 
 // Client utilities
 export {
@@ -22,16 +22,16 @@ export {
   isTestnet,
   getSupportedChains,
   initializeSwapKitClient,
-} from './client';
+} from './client.js';
 
-export type { ChainType } from './client';
+export type { ChainType } from './client.js';
 
 // Swap service
 export {
   SwapService,
   getSwapService,
   resetSwapService,
-} from './swapService';
+} from './swapService.js';
 
 // Types
 export type {
@@ -45,9 +45,9 @@ export type {
   SwapQuoteResponse,
   BridgeDepositInfo,
   TransactionStatus,
-} from './types';
+} from './types.js';
 
 export {
   SUPPORTED_ASSETS,
   SWAP_PROVIDERS,
-} from './types';
+} from './types.js';

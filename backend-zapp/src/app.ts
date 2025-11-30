@@ -1,13 +1,13 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
-import orderRoutes from './routes/orderRoutes';
-import batchOrderRoutes from './routes/batchOrderRoutes';
-import adminOrderRoutes from './routes/adminOrderRoutes';
-import merchantAuthRoutes from './routes/merchantAuthRoutes';
-import merchantRoutes from './routes/merchantRoutes';
-import earnRoutes from './routes/earnRoutes';
-import { notFoundHandler, errorHandler } from './middleware/errorHandler';
+import orderRoutes from './routes/orderRoutes.js';
+import batchOrderRoutes from './routes/batchOrderRoutes.js';
+import adminOrderRoutes from './routes/adminOrderRoutes.js';
+import merchantAuthRoutes from './routes/merchantAuthRoutes.js';
+import merchantRoutes from './routes/merchantRoutes.js';
+import earnRoutes from './routes/earnRoutes.js';
+import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
 export function createApp() {
   const app = express();

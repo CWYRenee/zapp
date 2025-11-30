@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { env } from './env';
+import { env } from './env.js';
 
 export async function connectDatabase(): Promise<void> {
   try {

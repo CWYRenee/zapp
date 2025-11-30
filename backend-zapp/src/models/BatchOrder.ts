@@ -3,8 +3,8 @@ import {
   ZAP_ORDER_STATUSES,
   type ZapOrderStatus,
   type MerchantGroup,
-} from '../types/order';
-import type { PaymentRailType } from '../types/merchant';
+} from '../types/order.js';
+import type { PaymentRailType } from '../types/merchant.js';
 
 export interface BatchOrderDocument extends Document {
   batchId: string;
