@@ -35,11 +35,51 @@ struct PayView: View {
         fiatAmount.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// The estimated ZEC amount required for this payment, or nil if not calculable
+    private var estimatedZecAmount: Decimal? {
+        guard
+            let priceUsd = zecPriceUsd,
+            !normalizedAmount.isEmpty,
+            let fiatDecimal = Decimal(string: normalizedAmount),
+            fiatDecimal > 0
+        else {
+            return nil
+        }
+
+        let priceDecimal = Decimal(priceUsd)
+        guard priceDecimal > 0 else { return nil }
+
+        let rate = currencyStore.convert(amount: 1, from: "USD", to: currencyStore.selectedCurrency)
+        let zecPriceInSelected = priceDecimal * rate
+        guard zecPriceInSelected > 0 else { return nil }
+
+        // Apply 1% spread: user pays more ZEC
+        let userDisplayRate = zecPriceInSelected / Decimal(1.01)
+        return fiatDecimal / userDisplayRate
+    }
+
+    /// The user's spendable ZEC balance as a Decimal, or nil if wallet not loaded
+    private var spendableZecBalance: Decimal? {
+        guard let info = walletViewModel.walletInfo else { return nil }
+        let balanceString = info.verifiedBalance.tazString(abs: true)
+        return Decimal(string: balanceString)
+    }
+
+    /// Whether the user has insufficient ZEC balance to cover the estimated amount
+    private var hasInsufficientBalance: Bool {
+        guard let estimated = estimatedZecAmount,
+              let spendable = spendableZecBalance else {
+            return false
+        }
+        return estimated > spendable
+    }
+
     private var isFormDisabled: Bool {
         isSubmitting
             || merchantCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || normalizedAmount.isEmpty
             || !walletViewModel.isReadyToSpend
+            || hasInsufficientBalance
     }
 
     var body: some View {
@@ -208,6 +248,12 @@ struct PayView: View {
                 Text("≈ \(zecText) ZEC at current rate")
                     .font(.footnote)
                     .foregroundColor(ZapColors.textSecondary)
+            }
+
+            if hasInsufficientBalance {
+                Text("Insufficient ZEC balance. You need more ZEC to complete this payment.")
+                    .font(.footnote)
+                    .foregroundColor(.red)
             }
 
             if derivedAmountFromCode {
@@ -1019,6 +1065,7 @@ private struct ZapPayTransactionView: View {
         let formatter = NumberFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false  // Critical: no commas for Zatoshi parser
         formatter.maximumFractionDigits = 8
         formatter.minimumFractionDigits = 1
         formatter.minimumIntegerDigits = 1

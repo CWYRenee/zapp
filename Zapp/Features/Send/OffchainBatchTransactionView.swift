@@ -304,6 +304,7 @@ struct OffchainBatchTransactionView: View {
         let formatter = NumberFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false  // Critical: no commas for Zatoshi parser
         formatter.maximumFractionDigits = 8
         formatter.minimumFractionDigits = 1
         formatter.minimumIntegerDigits = 1

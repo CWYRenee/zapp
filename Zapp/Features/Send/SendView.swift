@@ -182,11 +182,35 @@ struct SendView: View {
         amount.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// The user's spendable ZEC balance as a Decimal, or nil if wallet not loaded
+    private var spendableZecBalance: Decimal? {
+        guard let info = walletViewModel.walletInfo else { return nil }
+        let balanceString = info.verifiedBalance.tazString(abs: true)
+        return Decimal(string: balanceString)
+    }
+
+    /// The ZEC amount to send as a Decimal (handles both ZEC and fiat input modes)
+    private var zecAmountDecimal: Decimal? {
+        let zecString = zecAmount
+        guard !zecString.isEmpty else { return nil }
+        return Decimal(string: zecString)
+    }
+
+    /// Whether the user has insufficient ZEC balance to cover the send amount
+    private var hasInsufficientBalance: Bool {
+        guard let sendAmount = zecAmountDecimal,
+              let spendable = spendableZecBalance else {
+            return false
+        }
+        return sendAmount > spendable
+    }
+
     private var isFormDisabled: Bool {
         isSending
             || normalizedAddress.isEmpty
             || normalizedAmount.isEmpty
             || !walletViewModel.isReadyToSpend
+            || hasInsufficientBalance
     }
     
     /// Validates if the address is a recognized format
@@ -452,6 +476,12 @@ struct SendView: View {
                                 Text(converted)
                                     .font(.footnote)
                                     .foregroundColor(ZapColors.textSecondary)
+                            }
+
+                            if hasInsufficientBalance {
+                                Text("Insufficient ZEC balance. You need more ZEC to complete this transaction.")
+                                    .font(.footnote)
+                                    .foregroundColor(.red)
                             }
 
                             Text("Available: \(walletViewModel.spendableZecBalanceText)")
