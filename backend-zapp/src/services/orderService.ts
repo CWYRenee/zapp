@@ -240,9 +240,8 @@ export class OrderService {
       order.fiatPaymentReference = paymentReference.trim();
     }
 
-    order.status = 'completed';
+    order.status = 'fiat_sent';
     this.appendStatus(order, 'fiat_sent', notes || 'Facilitator marked fiat as sent');
-    this.appendStatus(order, 'completed', 'Order completed');
 
     return order.save();
   }

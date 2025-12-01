@@ -194,6 +194,26 @@ export function OrdersTable() {
               </div>
             </div>
 
+            {order.scannedQRCodeData && (
+              <div className="mt-1 rounded-md bg-gray-50 px-2 py-1.5">
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 text-[11px] text-gray-500">Payment link</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="max-h-10 overflow-y-auto font-mono text-[10px] text-gray-800 break-all">
+                      {order.scannedQRCodeData}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => order.scannedQRCodeData && void handleCopy(order.scannedQRCodeData)}
+                    className="mt-0.5 inline-flex flex-shrink-0 items-center rounded-full border border-gray-200 bg-white p-0.5 text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  >
+                    <Copy className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {variant === 'pending' && (
               <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-100 pt-2">
                 <button
@@ -384,6 +404,26 @@ export function OrdersTable() {
                             </div>
                           </div>
                         </div>
+
+                        {order.scannedQRCodeData && (
+                          <div className="mt-1 rounded-md bg-gray-50 px-2 py-1.5">
+                            <div className="flex items-start gap-2">
+                              <span className="flex-shrink-0 text-[11px] text-gray-500">Payment link</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="max-h-10 overflow-y-auto font-mono text-[10px] text-gray-800 break-all">
+                                  {order.scannedQRCodeData}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => order.scannedQRCodeData && void handleCopy(order.scannedQRCodeData)}
+                                className="mt-0.5 inline-flex flex-shrink-0 items-center rounded-full border border-gray-200 bg-white p-0.5 text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                         <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-100 pt-2">
                           <button
                             type="button"

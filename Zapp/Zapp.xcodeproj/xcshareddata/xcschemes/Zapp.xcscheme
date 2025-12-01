@@ -58,7 +58,7 @@
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "ZAPP_API_URL"
-            value = "http://192.168.1.192:4001"
+            value = "https://zapp-backend-ik5q.onrender.com"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>
