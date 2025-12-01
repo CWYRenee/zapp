@@ -12,7 +12,7 @@ export interface PaymentRailConfig {
   notes?: string;
 }
 
-export interface Merchant {
+export interface Facilitator {
   _id: string;
   email: string;
   displayName?: string;

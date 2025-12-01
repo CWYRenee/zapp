@@ -163,7 +163,7 @@ export function OrdersTable() {
                   {order.fiatAmount.toLocaleString()} {order.fiatCurrency}
                 </div>
 
-                {/* Show merchant ZEC amount and spread earnings */}
+                {/* Show facilitator ZEC amount and spread earnings */}
                 {order.merchantZecAmount && order.baseExchangeRate && (
                   <>
                     <div className="flex items-center justify-end gap-1 mt-1">
@@ -179,7 +179,7 @@ export function OrdersTable() {
                 )}
 
                 <div className="flex items-center justify-end gap-1 mt-1">
-                  <span className="text-[11px] text-gray-500">Merchant</span>
+                  <span className="text-[11px] text-gray-500">Facilitator</span>
                   <button
                     type="button"
                     onClick={() => void handleCopy(order.merchantName || order.merchantCode)}
@@ -218,13 +218,13 @@ export function OrdersTable() {
 
             {variant === 'active' && (
               <div className="mt-2 border-t border-gray-100 pt-2">
-                {/* Show QR code for merchant to scan and pay */}
+                {/* Show QR code for facilitator to scan and pay */}
                 {order.scannedQRCodeData && (
                   <div className="mb-3 flex justify-center">
                     <QRCodeDisplay
                       data={order.scannedQRCodeData}
                       size={100}
-                      label="Scan to pay merchant"
+                      label="Scan to pay facilitator"
                     />
                   </div>
                 )}
@@ -377,7 +377,7 @@ export function OrdersTable() {
                               {order.fiatAmount.toLocaleString()} {order.fiatCurrency}
                             </div>
                             <div className="flex items-center justify-end gap-1 mt-1">
-                              <span className="text-[11px] text-gray-500">Merchant</span>
+                              <span className="text-[11px] text-gray-500">Facilitator</span>
                             </div>
                             <div className="text-[11px] text-gray-800 truncate">
                               {order.merchantName || order.merchantCode}

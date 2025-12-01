@@ -17,7 +17,7 @@ struct ZapOrderDTO: Decodable {
     let platformZecAddress: String?
     let status: String
     let merchantZecAddress: String?
-    // Raw QR code data scanned by user (for merchant to scan and pay)
+    // Raw QR code data scanned by user (for facilitator to scan and pay)
     let scannedQRCodeData: String?
     // Batch order reference
     let batchId: String?
@@ -173,7 +173,7 @@ enum ZapOrderError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidMerchant:
-            return "Merchant information is invalid."
+            return "Facilitator information is invalid."
         case .invalidAmount:
             return "Please enter a valid amount greater than zero."
         case .backend(let message):

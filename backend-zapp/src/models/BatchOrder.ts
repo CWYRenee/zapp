@@ -4,7 +4,7 @@ import {
   type ZapOrderStatus,
   type MerchantGroup,
 } from '../types/order.js';
-import type { PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailType } from '../types/facilitator.js';
 
 export interface BatchOrderDocument extends Document {
   batchId: string;

@@ -43,7 +43,7 @@ enum ZapOrderError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidMerchant:
-            return "Merchant information is invalid."
+            return "Facilitator information is invalid."
         case .invalidAmount:
             return "Please enter a valid amount greater than zero."
         case .backend(let message):

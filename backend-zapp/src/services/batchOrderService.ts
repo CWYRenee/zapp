@@ -1,5 +1,5 @@
 import { ZapOrder, type ZapOrderDocument } from '../models/ZapOrder.js';
-import { Merchant } from '../models/Merchant.js';
+import { Facilitator } from '../models/Facilitator.js';
 import { RateService } from './rateService.js';
 import {
   type CreateBatchOrderInput,
@@ -7,7 +7,7 @@ import {
   type ZapOrderStatus,
   type StatusHistoryEntry,
 } from '../types/order.js';
-import type { PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailType } from '../types/facilitator.js';
 
 /** Timeout in milliseconds for grouped orders before they split into individuals */
 const GROUP_TIMEOUT_MS = 10_000; // 10 seconds
@@ -24,12 +24,12 @@ interface BatchCreateResult {
  * Simplified Batch Order Service
  * 
  * Flow:
- * 1. When batch order is created, check if ONE merchant can handle ALL payment rails
- * 2. If YES: Create grouped orders with 10-second timeout for that merchant
+ * 1. When batch order is created, check if ONE facilitator can handle ALL payment rails
+ * 2. If YES: Create grouped orders with 10-second timeout for that facilitator
  * 3. If NO: Create as individual pending orders immediately
  * 4. After 10 seconds if grouped orders not accepted: Split into individual orders
  * 
- * Merchants see orders in their regular pending list, not as "batch orders"
+ * Facilitators see orders in their regular pending list, not as "batch orders"
  */
 export class BatchOrderService {
   private static generateBatchId(): string {
@@ -61,24 +61,24 @@ export class BatchOrderService {
   }
 
   /**
-   * Find a merchant that can handle ALL the given payment rails
+   * Find a facilitator that can handle ALL the given payment rails
    */
   private static async findMerchantForAllRails(rails: PaymentRailType[]): Promise<string | null> {
     if (rails.length === 0) return null;
 
-    // Find merchants with all required rails enabled
-    const merchants = await Merchant.find({
+    // Find facilitators with all required rails enabled
+    const facilitators = await Facilitator.find({
       zecAddress: { $exists: true, $ne: '' },
     });
 
-    for (const merchant of merchants) {
-      const enabledRails = merchant.paymentRails
+    for (const facilitator of facilitators) {
+      const enabledRails = facilitator.paymentRails
         .filter((r: { enabled: boolean }) => r.enabled)
         .map((r: { type: PaymentRailType }) => r.type);
 
       const canHandleAll = rails.every(rail => enabledRails.includes(rail));
       if (canHandleAll) {
-        return merchant._id.toString();
+        return facilitator._id.toString();
       }
     }
 
@@ -86,9 +86,9 @@ export class BatchOrderService {
   }
 
   /**
-   * Create a batch of orders with intelligent merchant matching.
+   * Create a batch of orders with intelligent facilitator matching.
    * 
-   * If one merchant can handle all payment rails -> group orders with timeout
+   * If one facilitator can handle all payment rails -> group orders with timeout
    * Otherwise -> create individual pending orders
    */
   static async createBatchOrder(input: CreateBatchOrderInput): Promise<BatchCreateResult> {
@@ -108,7 +108,7 @@ export class BatchOrderService {
     // Extract unique payment rails from items
     const uniqueRails = [...new Set(input.items.map(item => item.paymentRail))];
 
-    // Check if one merchant can handle all rails
+    // Check if one facilitator can handle all rails
     const targetMerchantId = await this.findMerchantForAllRails(uniqueRails);
     const isGrouped = targetMerchantId !== null;
 
@@ -163,7 +163,7 @@ export class BatchOrderService {
     const merchantCode = item.merchantCode.trim();
 
     if (!merchantCode) {
-      throw new Error('Merchant code is required for each recipient');
+      throw new Error('Facilitator code is required for each recipient');
     }
 
     if (!Number.isFinite(item.fiatAmount) || item.fiatAmount <= 0) {
@@ -220,7 +220,7 @@ export class BatchOrderService {
    * Split expired grouped orders into individual orders.
    * Called automatically after GROUP_TIMEOUT_MS.
    * 
-   * This removes the group association so orders become available to any merchant.
+   * This removes the group association so orders become available to any facilitator.
    */
   static async splitExpiredGroup(groupId: string): Promise<number> {
     const now = new Date();
@@ -249,7 +249,7 @@ export class BatchOrderService {
           statusHistory: {
             status: 'pending',
             timestamp: now,
-            note: 'Group expired - order now available to all merchants',
+            note: 'Group expired - order now available to all facilitators',
           },
         },
       }
@@ -279,7 +279,7 @@ export class BatchOrderService {
   }
 
   /**
-   * Accept all orders in a group (merchant accepting grouped batch)
+   * Accept all orders in a group (facilitator accepting grouped batch)
    */
   static async acceptGroup(
     groupId: string,
@@ -290,7 +290,7 @@ export class BatchOrderService {
     const trimmedZecAddress = merchantZecAddress.trim();
 
     if (!trimmedMerchantId || !trimmedZecAddress) {
-      throw new Error('Merchant ID and ZEC address are required');
+      throw new Error('Facilitator ID and ZEC address are required');
     }
 
     // Find all orders in this group
@@ -300,10 +300,10 @@ export class BatchOrderService {
       throw new Error('No pending orders found for this group');
     }
 
-    // Verify merchant is the target (if set)
+    // Verify facilitator is the target (if set)
     const targetMerchant = orders[0].targetMerchantId;
     if (targetMerchant && targetMerchant !== trimmedMerchantId) {
-      throw new Error('This group is reserved for a different merchant');
+      throw new Error('This group is reserved for a different facilitator');
     }
 
     // Check if group has expired
@@ -327,7 +327,7 @@ export class BatchOrderService {
           statusHistory: {
             status: 'accepted',
             timestamp: new Date(),
-            note: `Accepted by merchant ${trimmedMerchantId} as group`,
+            note: `Accepted by facilitator ${trimmedMerchantId} as group`,
           },
         },
       }

@@ -128,7 +128,7 @@ struct PayView: View {
                             isShowingQRScanner = false
                         }
                     )
-                    .navigationTitle("Scan merchant ID")
+                    .navigationTitle("Scan facilitator ID")
                     .navigationBarTitleDisplayMode(.inline)
                 }
             }
@@ -137,12 +137,12 @@ struct PayView: View {
 
     private var merchantSection: some View {
         VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            Text("Merchant")
+            Text("Facilitator")
                 .font(.subheadline)
                 .foregroundColor(ZapColors.textSecondary)
 
             HStack(spacing: 8) {
-                TextField("Merchant ID or code", text: $merchantCode)
+                TextField("Facilitator ID or code", text: $merchantCode)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled(true)
                     .multilineTextAlignment(.leading)
@@ -165,7 +165,7 @@ struct PayView: View {
             }
 
             if merchantCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                Text("Paste or scan the merchant's payment code to start.")
+                Text("Paste or scan the facilitator's payment code to start.")
                     .font(.footnote)
                     .foregroundColor(ZapColors.textSecondary)
             }
@@ -246,7 +246,7 @@ struct PayView: View {
             }
             .buttonStyle(.plain)
 
-            Text("Select how the merchant will receive fiat payment.")
+            Text("Select how the facilitator will receive fiat payment.")
                 .font(.footnote)
                 .foregroundColor(ZapColors.textSecondary)
         }
@@ -258,7 +258,7 @@ struct PayView: View {
                 .font(.subheadline)
                 .foregroundColor(ZapColors.textSecondary)
 
-            Text("This will create a crypto payment to the matched merchant once the payment code is verified.")
+            Text("This will create a crypto payment to the matched facilitator once the payment code is verified.")
                 .font(.footnote)
                 .foregroundColor(ZapColors.textSecondary)
         }
@@ -268,7 +268,7 @@ struct PayView: View {
         errorMessage = nil
         derivedAmountFromCode = false
         
-        // Always store the raw QR code data for the merchant to scan later
+        // Always store the raw QR code data for the facilitator to scan later
         scannedQRCodeData = code
 
         if let data = code.data(using: .utf8),
@@ -381,7 +381,7 @@ struct PayView: View {
 
         guard !trimmedCode.isEmpty else {
             isSubmitting = false
-            errorMessage = "Merchant code is required."
+            errorMessage = "Facilitator code is required."
             return
         }
 
@@ -563,7 +563,7 @@ private struct PayQRScannerSheetView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: ZapSpacing.lg) {
-                    Text("Scan merchant QR")
+                    Text("Scan facilitator QR")
                         .font(.subheadline)
                         .foregroundColor(ZapColors.textSecondary)
 
@@ -588,7 +588,7 @@ private struct PayQRScannerSheetView: View {
                             .foregroundColor(ZapColors.textSecondary)
 
                         HStack(spacing: 0) {
-                            TextField("Merchant ID", text: $manualCode)
+                            TextField("Facilitator ID", text: $manualCode)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .padding()
@@ -762,7 +762,7 @@ private struct ZapPayTransactionView: View {
                     }
 
                     VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-                        Text("Merchant")
+                        Text("Facilitator")
                             .font(.subheadline)
                             .foregroundColor(ZapColors.textSecondary)
 
@@ -807,7 +807,7 @@ private struct ZapPayTransactionView: View {
                                 .font(.footnote)
                                 .foregroundColor(ZapColors.textSecondary)
                         } else if isFiatPaid && merchantWalletAddress != nil {
-                            Text("Fiat payment confirmed. Send ZEC to the merchant's wallet above to finish.")
+                            Text("Fiat payment confirmed. Send ZEC to the facilitator's wallet above to finish.")
                                 .font(.footnote)
                                 .foregroundColor(ZapColors.textSecondary)
                         } else if merchantWalletAddress == nil {
@@ -815,7 +815,7 @@ private struct ZapPayTransactionView: View {
                                 .font(.footnote)
                                 .foregroundColor(ZapColors.textSecondary)
                         } else {
-                            Text("Match found. Waiting for fiat confirmation from the merchant…")
+                            Text("Match found. Waiting for fiat confirmation from the facilitator…")
                                 .font(.footnote)
                                 .foregroundColor(ZapColors.textSecondary)
                         }
@@ -970,13 +970,13 @@ private struct ZapPayTransactionView: View {
                                 !(currentOrder.platformZecAddress?.isEmpty ?? true)
 
         do {
-            // Send to merchant
+            // Send to facilitator
             if let merchantZecAmount = currentOrder.merchantZecAmount, merchantZecAmount > 0 {
                 let merchantAmountString = try formatZecAmount(merchantZecAmount)
                 _ = try await walletViewModel.send(
                     to: merchantAddress,
                     amount: merchantAmountString,
-                    memo: "Zapp order \(currentOrder.orderId) - merchant"
+                    memo: "Zapp order \(currentOrder.orderId) - facilitator"
                 )
             } else {
                 // Fallback to full amount if no spread data

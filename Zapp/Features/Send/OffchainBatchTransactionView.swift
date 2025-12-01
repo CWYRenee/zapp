@@ -143,7 +143,7 @@ struct OffchainBatchTransactionView: View {
                 .font(ZapTypography.titleFont)
                 .foregroundColor(ZapColors.primary)
             
-            Text("Stay on this screen while we match your payments to merchants.")
+            Text("Stay on this screen while we match your payments to facilitators.")
                 .font(.footnote)
                 .foregroundColor(ZapColors.textSecondary)
         }
@@ -182,12 +182,12 @@ struct OffchainBatchTransactionView: View {
     
     private var merchantGroupsSection: some View {
         VStack(alignment: .leading, spacing: ZapSpacing.sm) {
-            Text("Merchant Matches (\(currentBatch.merchantGroups.count))")
+            Text("Facilitator Matches (\(currentBatch.merchantGroups.count))")
                 .font(.subheadline)
                 .foregroundColor(ZapColors.textSecondary)
             
             if currentBatch.merchantGroups.isEmpty {
-                Text("Finding merchants to handle your payment rails...")
+                Text("Finding facilitators to handle your payment rails...")
                     .font(.footnote)
                     .foregroundColor(ZapColors.textSecondary)
                     .padding()
@@ -286,7 +286,7 @@ struct OffchainBatchTransactionView: View {
             } catch {
                 isSendingZec = false
                 if let walletError = error as? WalletError, case .invalidRecipient = walletError {
-                    errorMessage = "Invalid merchant address for group \(group.groupId). Please contact support."
+                    errorMessage = "Invalid facilitator address for group \(group.groupId). Please contact support."
                 } else {
                     errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                 }
@@ -343,7 +343,7 @@ private struct MerchantGroupRowView: View {
         VStack(alignment: .leading, spacing: ZapSpacing.xs) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Merchant \(group.merchantId ?? "Pending")")
+                    Text("Facilitator \(group.merchantId ?? "Pending")")
                         .font(.footnote)
                         .fontWeight(.medium)
                         .foregroundColor(ZapColors.textPrimary)

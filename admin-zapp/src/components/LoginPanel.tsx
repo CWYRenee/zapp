@@ -6,7 +6,7 @@ interface Props {
 }
 
 export function LoginPanel({ defaultEmail }: Props) {
-  const { requestOtp, verifyOtp, loading, token, merchant, logout } = useAuth();
+  const { requestOtp, verifyOtp, loading, token, facilitator, logout } = useAuth();
   const [email, setEmail] = useState(defaultEmail ?? '');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'email' | 'otp'>('email');
@@ -14,12 +14,12 @@ export function LoginPanel({ defaultEmail }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (token && merchant) {
+  if (token && facilitator) {
     return (
       <div className="flex items-center gap-4">
         <div className="text-sm text-gray-700">
-          <div className="font-semibold">{merchant.displayName || merchant.email}</div>
-          <div className="text-xs text-gray-500 truncate max-w-xs">{merchant.email}</div>
+          <div className="font-semibold">{facilitator.displayName || facilitator.email}</div>
+          <div className="text-xs text-gray-500 truncate max-w-xs">{facilitator.email}</div>
         </div>
         <button
           type="button"
@@ -83,7 +83,7 @@ export function LoginPanel({ defaultEmail }: Props) {
         <input
           type="email"
           className="px-2 py-1.5 text-sm rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="merchant@example.com"
+          placeholder="facilitator@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={submitting || loading || step === 'otp'}

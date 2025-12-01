@@ -4,7 +4,7 @@ import {
   type ZapOrderStatus,
   type StatusHistoryEntry,
 } from '../types/order.js';
-import type { PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailType } from '../types/facilitator.js';
 
 export interface ZapOrderDocument extends Document {
   orderId: string;
@@ -32,7 +32,7 @@ export interface ZapOrderDocument extends Document {
   batchId?: string;
   groupId?: string;              // Links orders that must be accepted together
   groupExpiresAt?: Date;         // When grouped orders split into individuals (10s timeout)
-  targetMerchantId?: string;     // Merchant who can handle all rails in the group
+  targetMerchantId?: string;     // Facilitator who can handle all rails in the group
   status: ZapOrderStatus;
   statusHistory: StatusHistoryEntry[];
   metadata?: Record<string, unknown>;

@@ -15,5 +15,5 @@ export const env = {
   PORT: parseInt(process.env.PORT ?? '4001', 10),
   MONGODB_URI: getEnv('MONGODB_URI'),
   ADMIN_API_KEY: getEnv('ZAP_ADMIN_API_KEY', 'changeme-admin-key'),
-  MERCHANT_JWT_SECRET: getEnv('MERCHANT_JWT_SECRET', 'changeme-merchant-secret'),
+  MERCHANT_JWT_SECRET: getEnv('MERCHANT_JWT_SECRET', 'changeme-facilitator-secret'),
 };

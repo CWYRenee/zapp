@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
-import { Merchant, type MerchantDocument } from '../models/Merchant.js';
+import { Facilitator, type MerchantDocument } from '../models/Facilitator.js';
 
 interface AuthTokenPayload {
   sub: string;
@@ -11,10 +11,10 @@ interface AuthTokenPayload {
 }
 
 export interface AuthenticatedRequest extends Request {
-  merchant?: MerchantDocument;
+  facilitator?: MerchantDocument;
 }
 
-// Demo token that bypasses JWT validation and uses first available merchant
+// Demo token that bypasses JWT validation and uses first available facilitator
 const DEMO_TOKEN = 'demo-token-no-auth';
 
 export async function requireMerchantAuth(
@@ -36,19 +36,19 @@ export async function requireMerchantAuth(
 
     const token = authHeader.substring('Bearer '.length).trim();
 
-    // Demo mode: bypass JWT and use first merchant in database
+    // Demo mode: bypass JWT and use first facilitator in database
     if (token === DEMO_TOKEN) {
-      const demoMerchant = await Merchant.findOne();
+      const demoMerchant = await Facilitator.findOne();
       if (!demoMerchant) {
         res.status(401).json({
           success: false,
           error: 'Unauthorized',
-          message: 'No merchant found for demo mode',
+          message: 'No facilitator found for demo mode',
         });
         return;
       }
-      console.log('[Demo Mode] Using merchant:', demoMerchant.email);
-      req.merchant = demoMerchant;
+      console.log('[Demo Mode] Using facilitator:', demoMerchant.email);
+      req.facilitator = demoMerchant;
       next();
       return;
     }
@@ -65,24 +65,24 @@ export async function requireMerchantAuth(
       return;
     }
 
-    const merchant = await Merchant.findById(payload.sub);
-    if (!merchant) {
+    const facilitator = await Facilitator.findById(payload.sub);
+    if (!facilitator) {
       res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not found',
+        message: 'Facilitator not found',
       });
       return;
     }
 
-    req.merchant = merchant;
+    req.facilitator = facilitator;
     next();
   } catch (error) {
-    console.error('[zapp-backend] Merchant auth error:', error);
+    console.error('[zapp-backend] Facilitator auth error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: 'Failed to authenticate merchant',
+      message: 'Failed to authenticate facilitator',
     });
   }
 }

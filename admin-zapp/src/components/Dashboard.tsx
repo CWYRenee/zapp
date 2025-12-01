@@ -9,7 +9,7 @@ import { ArrowLeft, User } from 'lucide-react';
 const DEMO_EMAIL = 'test@email.com';
 
 export function Dashboard() {
-  const { loading, token, merchant, loginAsDemo, logout } = useAuth();
+  const { loading, token, facilitator, loginAsDemo, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'analytics'>('orders');
   const [demoLoading, setDemoLoading] = useState(false);
 
@@ -38,21 +38,21 @@ export function Dashboard() {
               </Link>
               <div className="h-6 w-px bg-gray-200" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Zapp Merchant Admin</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Zapp Facilitator Admin</h1>
                 <p className="text-xs text-gray-500">
-                  Manage merchant profile, payment rails, and live Zapp P2P orders.
+                  Manage facilitator profile, payment rails, and live Zapp P2P orders.
                 </p>
               </div>
             </div>
             
             {/* Demo user indicator */}
-            {merchant && (
+            {facilitator && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-1.5">
                   <User className="h-4 w-4 text-[#FF9417]" />
                   <div className="text-sm">
                     <span className="text-gray-600">Demo: </span>
-                    <span className="font-medium text-gray-900">{merchant.email}</span>
+                    <span className="font-medium text-gray-900">{facilitator.email}</span>
                   </div>
                 </div>
                 <button
@@ -73,7 +73,7 @@ export function Dashboard() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF9417] mb-4"></div>
             <div className="text-sm text-gray-500">Loading demo session...</div>
           </div>
-        ) : !token || !merchant ? (
+        ) : !token || !facilitator ? (
           <div className="rounded-md border border-dashed border-gray-300 bg-white px-4 py-6 text-sm text-gray-600 text-center">
             <p className="mb-4">Unable to connect to demo account.</p>
             <button
@@ -97,16 +97,16 @@ export function Dashboard() {
                   Orders
                 </TabButton>
                 <TabButton
-                  active={activeTab === 'profile'}
-                  onClick={() => setActiveTab('profile')}
-                >
-                  Profile & payment rails
-                </TabButton>
-                <TabButton
                   active={activeTab === 'analytics'}
                   onClick={() => setActiveTab('analytics')}
                 >
                   Analytics
+                </TabButton>
+                <TabButton
+                  active={activeTab === 'profile'}
+                  onClick={() => setActiveTab('profile')}
+                >
+                  Profile & Payment Rails
                 </TabButton>
               </div>
               <div className="text-xs text-gray-500">

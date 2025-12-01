@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { apiFetch } from '@/lib/apiClient';
-import type { Merchant, PaymentRailConfig, PaymentRailType } from '@/types/merchant';
+import type { Facilitator, PaymentRailConfig, PaymentRailType } from '@/types/facilitator';
 
 interface ProfileResponse {
   success: boolean;
-  merchant: Merchant;
+  facilitator: Facilitator;
 }
 
 interface UpdateProfileResponse {
   success: boolean;
-  merchant: Merchant;
+  facilitator: Facilitator;
 }
 
 const PAYMENT_RAIL_TYPES: { value: PaymentRailType; label: string; placeholder?: string }[] = [
@@ -27,14 +27,14 @@ export function ProfileForm() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['merchant', 'profile'],
+    queryKey: ['facilitator', 'profile'],
     queryFn: async () => {
       if (!token) throw new Error('Not authenticated');
-      const res = await apiFetch<ProfileResponse>('/api/zapp/merchant/profile', {
+      const res = await apiFetch<ProfileResponse>('/api/zapp/facilitator/profile', {
         method: 'GET',
         token,
       });
-      return res.merchant;
+      return res.facilitator;
     },
     enabled: Boolean(token),
   });
@@ -46,19 +46,19 @@ export function ProfileForm() {
       payment_rails?: PaymentRailConfig[];
     }) => {
       if (!token) throw new Error('Not authenticated');
-      const res = await apiFetch<UpdateProfileResponse>('/api/zapp/merchant/profile', {
+      const res = await apiFetch<UpdateProfileResponse>('/api/zapp/facilitator/profile', {
         method: 'PUT',
         token,
         body: payload,
       });
-      return res.merchant;
+      return res.facilitator;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['merchant', 'profile'] });
+      void queryClient.invalidateQueries({ queryKey: ['facilitator', 'profile'] });
     },
   });
 
-  const merchant = data;
+  const facilitator = data;
 
   const [localRails, setLocalRails] = useState<PaymentRailConfig[]>([]);
   const [displayName, setDisplayName] = useState('');
@@ -66,15 +66,15 @@ export function ProfileForm() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    if (!merchant) return;
-    setDisplayName(merchant.displayName ?? '');
-    setZecAddress(merchant.zecAddress ?? '');
-    if (merchant.paymentRails && merchant.paymentRails.length > 0) {
-      setLocalRails(merchant.paymentRails);
+    if (!facilitator) return;
+    setDisplayName(facilitator.displayName ?? '');
+    setZecAddress(facilitator.zecAddress ?? '');
+    if (facilitator.paymentRails && facilitator.paymentRails.length > 0) {
+      setLocalRails(facilitator.paymentRails);
     }
-  }, [merchant]);
+  }, [facilitator]);
 
-  const rails = localRails.length > 0 ? localRails : merchant?.paymentRails ?? [];
+  const rails: PaymentRailConfig[] = localRails.length > 0 ? localRails : facilitator?.paymentRails ?? [];
 
   const handleAddRail = (type: PaymentRailType) => {
     const next: PaymentRailConfig = {
@@ -101,12 +101,12 @@ export function ProfileForm() {
   }, [showDropdown]);
 
   const handleRailChange = (index: number, patch: Partial<PaymentRailConfig>) => {
-    const next = rails.map((rail, i) => (i === index ? { ...rail, ...patch } : rail));
+    const next = rails.map((rail: PaymentRailConfig, i: number) => (i === index ? { ...rail, ...patch } : rail));
     setLocalRails(next);
   };
 
   const handleRemoveRail = (index: number) => {
-    const next = rails.filter((_, i) => i !== index);
+    const next = rails.filter((_: PaymentRailConfig, i: number) => i !== index);
     setLocalRails(next);
   };
 
@@ -138,47 +138,47 @@ export function ProfileForm() {
     return <div className="text-red-600 text-sm">Failed to load profile</div>;
   }
 
-  if (!merchant) {
-    return <div className="text-gray-500 text-sm">No merchant data available</div>;
+  if (!facilitator) {
+    return <div className="text-gray-500 text-sm">No facilitator data available</div>;
   }
 
-  const configuredRailTypes = new Set(rails.map((r) => r.type));
+  const configuredRailTypes = new Set(rails.map((r: PaymentRailConfig) => r.type));
   const availableRailTypes = PAYMENT_RAIL_TYPES.filter((rt) => !configuredRailTypes.has(rt.value));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
-      {/* Merchant Profile Section */}
+      {/* Facilitator Profile Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Merchant Profile</h2>
-          <p className="text-sm text-gray-500 mt-1">Your basic merchant information</p>
+          <h2 className="text-lg font-semibold text-gray-900">Facilitator Profile</h2>
+          <p className="text-sm text-gray-500 mt-1">Your basic facilitator information</p>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">
               Display Name
             </label>
             <input
               type="text"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF9417] focus:border-[#FF9417]"
+              disabled
+              className="block w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your merchant name"
+              placeholder="Your facilitator name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-500 mb-1.5">
               ZEC Address
             </label>
             <input
               type="text"
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+              disabled
+              className="block w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 font-mono cursor-not-allowed"
               value={zecAddress}
-              onChange={(e) => setZecAddress(e.target.value)}
               placeholder="u1..."
             />
-            <p className="text-xs text-gray-500 mt-1.5">
+            <p className="text-xs text-gray-400 mt-1.5">
               Your Zcash unified address for receiving payments
             </p>
           </div>
@@ -254,7 +254,7 @@ export function ProfileForm() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {rails.map((rail, index) => {
+              {rails.map((rail: PaymentRailConfig, index: number) => {
                 const railInfo = PAYMENT_RAIL_TYPES.find((rt) => rt.value === rail.type);
                 return (
                   <div

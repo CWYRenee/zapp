@@ -1,5 +1,5 @@
 import { Schema, model, type Document } from 'mongoose';
-import type { PaymentRailConfig, PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailConfig, PaymentRailType } from '../types/facilitator.js';
 
 export interface MerchantDocument extends Document {
   email: string;
@@ -91,4 +91,4 @@ const MerchantSchema = new Schema<MerchantDocument>(
   }
 );
 
-export const Merchant = model<MerchantDocument>('Merchant', MerchantSchema);
+export const Facilitator = model<MerchantDocument>('Facilitator', MerchantSchema);

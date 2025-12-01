@@ -1,15 +1,15 @@
 import { Router, type Request, type Response } from 'express';
 import { BatchOrderService } from '../services/batchOrderService.js';
 import type { BatchOrderItemInput, CreateBatchOrderInput } from '../types/order.js';
-import type { PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailType } from '../types/facilitator.js';
 
 const router = Router();
 
 /**
  * Create a batch of orders (multi-recipient payment)
  * 
- * Orders are created as regular pending orders visible to merchants.
- * If one merchant can handle all payment rails, orders are grouped with 10-second timeout.
+ * Orders are created as regular pending orders visible to facilitators.
+ * If one facilitator can handle all payment rails, orders are grouped with 10-second timeout.
  * Otherwise, orders are created as individual pending orders.
  */
 router.post('/', async (req: Request, res: Response) => {
@@ -87,7 +87,7 @@ router.post('/', async (req: Request, res: Response) => {
         createdAt: o.createdAt,
       })),
       message: result.isGrouped
-        ? 'Orders created as a group - merchant has 10 seconds to accept all together'
+        ? 'Orders created as a group - facilitator has 10 seconds to accept all together'
         : 'Orders created as individual pending orders',
     });
   } catch (error) {
@@ -157,7 +157,7 @@ router.get('/:batchId', async (req: Request, res: Response) => {
 });
 
 /**
- * Accept a group of orders (merchant accepting all orders in a group)
+ * Accept a group of orders (facilitator accepting all orders in a group)
  */
 router.post('/groups/:groupId/accept', async (req: Request, res: Response) => {
   try {

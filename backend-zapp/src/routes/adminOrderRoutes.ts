@@ -144,7 +144,7 @@ router.post('/:orderId/mark-fiat-sent', async (req: Request, res: Response) => {
   }
 });
 
-// Mark ZEC received for an order (user has paid merchant)
+// Mark ZEC received for an order (user has paid facilitator)
 router.post('/:orderId/mark-zec-received', async (req: Request, res: Response) => {
   try {
     const { orderId } = req.params;

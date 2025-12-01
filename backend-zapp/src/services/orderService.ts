@@ -5,7 +5,7 @@ import {
   type ZapOrderStatus,
   type StatusHistoryEntry,
 } from '../types/order.js';
-import type { PaymentRailType } from '../types/merchant.js';
+import type { PaymentRailType } from '../types/facilitator.js';
 
 export class OrderService {
   private static generateOrderId(): string {
@@ -36,7 +36,7 @@ export class OrderService {
     }
 
     if (!merchantCode) {
-      throw new Error('Merchant code is required');
+      throw new Error('Facilitator code is required');
     }
 
     if (!Number.isFinite(input.fiatAmount) || input.fiatAmount <= 0) {
@@ -52,7 +52,7 @@ export class OrderService {
       throw new Error('Payment rail is required');
     }
 
-    // Compute ZEC amounts with 1% spread (0.5% merchant, 0.5% platform)
+    // Compute ZEC amounts with 1% spread (0.5% facilitator, 0.5% platform)
     const spreadCalc = await RateService.computeZecAmountWithSpread(input.fiatAmount, fiatCurrency);
 
     // Get platform ZEC address from environment
@@ -80,7 +80,7 @@ export class OrderService {
       merchantZecAmount: spreadCalc.merchantZecAmount,
       platformZecAmount: spreadCalc.platformZecAmount,
       platformZecAddress,
-      // Raw QR code data scanned by user (for merchant to scan and pay)
+      // Raw QR code data scanned by user (for facilitator to scan and pay)
       scannedQRCodeData: input.scannedQRCodeData?.trim() || undefined,
       status: 'pending',
       statusHistory: [],
@@ -205,7 +205,7 @@ export class OrderService {
     order.merchantId = trimmedMerchantId;
     order.merchantZecAddress = trimmedZecAddress;
     order.status = 'accepted';
-    this.appendStatus(order, 'accepted', `Order accepted by merchant ${trimmedMerchantId}`);
+    this.appendStatus(order, 'accepted', `Order accepted by facilitator ${trimmedMerchantId}`);
 
     return order.save();
   }
@@ -227,7 +227,7 @@ export class OrderService {
     }
 
     if (order.merchantId && order.merchantId !== trimmedMerchantId) {
-      throw new Error('Merchant is not allowed to update this order');
+      throw new Error('Facilitator is not allowed to update this order');
     }
 
     if (order.status !== 'accepted') {
@@ -241,7 +241,7 @@ export class OrderService {
     }
 
     order.status = 'completed';
-    this.appendStatus(order, 'fiat_sent', notes || 'Merchant marked fiat as sent');
+    this.appendStatus(order, 'fiat_sent', notes || 'Facilitator marked fiat as sent');
     this.appendStatus(order, 'completed', 'Order completed');
 
     return order.save();
@@ -264,7 +264,7 @@ export class OrderService {
     }
 
     if (order.merchantId && order.merchantId !== trimmedMerchantId) {
-      throw new Error('Merchant is not allowed to update this order');
+      throw new Error('Facilitator is not allowed to update this order');
     }
 
     if (order.status !== 'fiat_sent') {

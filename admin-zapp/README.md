@@ -1,13 +1,13 @@
 # Zapp Admin Dashboard
 
-A focused React admin dashboard for Zapp merchants to:
+A focused React admin dashboard for Zapp facilitators to:
 
 - Log in via email + OTP
 - Configure payment rails (UPI, Alipay, bank transfer, other)
 - View and accept pending Zapp P2P orders
 - Mark fiat sent and ZEC received to complete orders
 
-Backed by the `zapp-backend` merchant APIs.
+Backed by the `zapp-backend` facilitator APIs.
 
 ## Setup
 
@@ -52,7 +52,7 @@ Open the URL printed by Vite (typically `http://localhost:5173`).
 ## Usage
 
 1. **Login**
-   - Enter a merchant email and click **Send OTP**.
+   - Enter a facilitator email and click **Send OTP**.
    - The backend will generate an OTP and log it to the server console in development.
    - Enter the OTP and click **Verify OTP** to log in.
 
@@ -62,8 +62,8 @@ Open the URL printed by Vite (typically `http://localhost:5173`).
 
 3. **Orders**
    - Use the **Orders** tab to view:
-     - **Pending** orders: global queue any merchant can accept.
-     - **Active** orders: orders accepted by this merchant.
+     - **Pending** orders: global queue any facilitator can accept.
+     - **Active** orders: orders accepted by this facilitator.
    - For each order you can:
      - **Accept** (from `pending`).
      - **Mark fiat sent** (from `accepted`).

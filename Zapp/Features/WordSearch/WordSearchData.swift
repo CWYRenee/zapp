@@ -45,7 +45,7 @@ enum WordSearchData {
         CypherpunkWord(word: "SDK", definition: "Software Development Kit—tools making it easier for developers to build privacy applications."),
         CypherpunkWord(word: "PCZT", definition: "Partially Constructed Zcash Transaction—allowing transparent users to create shielded payments."),
         CypherpunkWord(word: "PAYMENT PROCESSOR", definition: "Service converting payments to crypto; privacy processors hide transaction details from third parties."),
-        CypherpunkWord(word: "POINT-OF-SALE", definition: "Retail payment terminal; privacy POS systems let merchants accept anonymous crypto payments."),
+        CypherpunkWord(word: "POINT-OF-SALE", definition: "Retail payment terminal; privacy POS systems let facilitators accept anonymous crypto payments."),
         CypherpunkWord(word: "REMITTANCE", definition: "Money sent across borders; privacy remittances hide migrant worker transfers from governments."),
         CypherpunkWord(word: "MICROPAYMENT", definition: "Tiny transactions economically infeasible with traditional systems; privacy micropayments enable censorship-resistant donations."),
         CypherpunkWord(word: "ATOMIC SWAP", definition: "Direct peer-to-peer asset exchange across chains; privacy atomic swaps hide both sides."),

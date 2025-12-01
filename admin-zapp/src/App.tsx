@@ -8,7 +8,7 @@ import { useState } from 'react';
 const DEFAULT_EMAIL = import.meta.env.VITE_DEFAULT_ADMIN_EMAIL;
 
 function App() {
-  const { loading, token, merchant } = useAuth();
+  const { loading, token, facilitator } = useAuth();
   const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'analytics'>('orders');
 
   return (
@@ -16,9 +16,9 @@ function App() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Zapp Merchant Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Zapp Facilitator Admin</h1>
             <p className="text-xs text-gray-500">
-              Manage merchant profile, payment rails, and live Zapp P2P orders.
+              Manage facilitator profile, payment rails, and live Zapp P2P orders.
             </p>
           </div>
           <LoginPanel defaultEmail={typeof DEFAULT_EMAIL === 'string' ? DEFAULT_EMAIL : undefined} />
@@ -28,9 +28,9 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         {loading ? (
           <div className="text-sm text-gray-500">Loading session...</div>
-        ) : !token || !merchant ? (
+        ) : !token || !facilitator ? (
           <div className="rounded-md border border-dashed border-gray-300 bg-white px-4 py-6 text-sm text-gray-600">
-            Enter your merchant email and OTP above to access the dashboard.
+            Enter your facilitator email and OTP above to access the dashboard.
           </div>
         ) : (
           <>

@@ -2,42 +2,42 @@ import { Router, type Response } from 'express';
 import { requireMerchantAuth, type AuthenticatedRequest } from '../middleware/merchantAuth.js';
 import { ZapOrder } from '../models/ZapOrder.js';
 import { OrderService } from '../services/orderService.js';
-import type { PaymentRailConfig } from '../types/merchant.js';
+import type { PaymentRailConfig } from '../types/facilitator.js';
 import type { ZapOrderStatus } from '../types/order.js';
 
 const router = Router();
 
-// All routes below require merchant authentication
+// All routes below require facilitator authentication
 router.use(requireMerchantAuth);
 
-// Get current merchant profile
+// Get current facilitator profile
 router.get('/profile', async (req: AuthenticatedRequest, res: Response) => {
-  const merchant = req.merchant;
+  const facilitator = req.facilitator;
 
-  if (!merchant) {
+  if (!facilitator) {
     return res.status(401).json({
       success: false,
       error: 'Unauthorized',
-      message: 'Merchant not authenticated',
+      message: 'Facilitator not authenticated',
     });
   }
 
   return res.status(200).json({
     success: true,
-    merchant,
+    facilitator,
   });
 });
 
-// Update merchant profile (display name, ZEC address, payment rails)
+// Update facilitator profile (display name, ZEC address, payment rails)
 router.put('/profile', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
@@ -46,14 +46,14 @@ router.put('/profile', async (req: AuthenticatedRequest, res: Response) => {
     if (typeof display_name === 'string') {
       const trimmed = display_name.trim();
       if (trimmed) {
-        merchant.displayName = trimmed;
+        facilitator.displayName = trimmed;
       }
     }
 
     if (typeof zec_address === 'string') {
       const trimmedZec = zec_address.trim();
       if (trimmedZec) {
-        merchant.zecAddress = trimmedZec;
+        facilitator.zecAddress = trimmedZec;
       }
     }
 
@@ -82,14 +82,14 @@ router.put('/profile', async (req: AuthenticatedRequest, res: Response) => {
         })
         .filter((cfg: PaymentRailConfig | undefined): cfg is PaymentRailConfig => cfg !== undefined);
 
-      merchant.paymentRails = rails;
+      facilitator.paymentRails = rails;
     }
 
-    await merchant.save();
+    await facilitator.save();
 
     return res.status(200).json({
       success: true,
-      merchant,
+      facilitator,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update profile';
@@ -101,21 +101,21 @@ router.put('/profile', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// List pending orders that any merchant can accept
+// List pending orders that any facilitator can accept
 router.get('/orders/pending', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
-    // Get merchant's enabled payment rails
-    const enabledRails = merchant.paymentRails
+    // Get facilitator's enabled payment rails
+    const enabledRails = facilitator.paymentRails
       .filter((rail) => rail.enabled)
       .map((rail) => rail.type);
 
@@ -136,21 +136,21 @@ router.get('/orders/pending', async (req: AuthenticatedRequest, res: Response) =
   }
 });
 
-// List active orders for the authenticated merchant (orders the merchant still needs to send fiat for)
+// List active orders for the authenticated facilitator (orders the facilitator still needs to send fiat for)
 router.get('/orders/active', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
     const orders = await ZapOrder.find({
-      merchantId: merchant.id,
+      merchantId: facilitator.id,
       status: 'accepted',
     })
       .sort({ createdAt: -1 })
@@ -171,23 +171,23 @@ router.get('/orders/active', async (req: AuthenticatedRequest, res: Response) =>
   }
 });
 
-// List completed orders for the authenticated merchant (fiat sent and fully completed orders)
+// List completed orders for the authenticated facilitator (fiat sent and fully completed orders)
 router.get('/orders/completed', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
     const completedStatuses: ZapOrderStatus[] = ['fiat_sent', 'completed'];
 
     const orders = await ZapOrder.find({
-      merchantId: merchant.id,
+      merchantId: facilitator.id,
       status: { $in: completedStatuses },
     })
       .sort({ createdAt: -1 })
@@ -208,23 +208,23 @@ router.get('/orders/completed', async (req: AuthenticatedRequest, res: Response)
   }
 });
 
-// Accept an order as the authenticated merchant
+// Accept an order as the authenticated facilitator
 router.post('/orders/:orderId/accept', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
     const { orderId } = req.params;
     const { zec_address } = req.body;
 
-    const merchantZecAddress = (typeof zec_address === 'string' && zec_address.trim()) || merchant.zecAddress;
+    const merchantZecAddress = (typeof zec_address === 'string' && zec_address.trim()) || facilitator.zecAddress;
 
     if (!merchantZecAddress) {
       return res.status(400).json({
@@ -234,7 +234,7 @@ router.post('/orders/:orderId/accept', async (req: AuthenticatedRequest, res: Re
       });
     }
 
-    const order = await OrderService.acceptOrder(orderId, merchant.id, merchantZecAddress);
+    const order = await OrderService.acceptOrder(orderId, facilitator.id, merchantZecAddress);
 
     if (!order) {
       return res.status(404).json({
@@ -262,13 +262,13 @@ router.post('/orders/:orderId/accept', async (req: AuthenticatedRequest, res: Re
 // Mark fiat as sent for an order
 router.post('/orders/:orderId/mark-fiat-sent', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
@@ -277,7 +277,7 @@ router.post('/orders/:orderId/mark-fiat-sent', async (req: AuthenticatedRequest,
 
     const order = await OrderService.markFiatSent(
       orderId,
-      merchant.id,
+      facilitator.id,
       payment_reference ? String(payment_reference) : undefined,
       notes ? String(notes) : undefined,
     );
@@ -308,13 +308,13 @@ router.post('/orders/:orderId/mark-fiat-sent', async (req: AuthenticatedRequest,
 // Mark ZEC as received for an order (user has paid)
 router.post('/orders/:orderId/mark-zec-received', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const merchant = req.merchant;
+    const facilitator = req.facilitator;
 
-    if (!merchant) {
+    if (!facilitator) {
       return res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Merchant not authenticated',
+        message: 'Facilitator not authenticated',
       });
     }
 
@@ -323,7 +323,7 @@ router.post('/orders/:orderId/mark-zec-received', async (req: AuthenticatedReque
 
     const order = await OrderService.markZecReceived(
       orderId,
-      merchant.id,
+      facilitator.id,
       zec_tx_hash ? String(zec_tx_hash) : undefined,
       notes ? String(notes) : undefined,
     );

@@ -1,14 +1,52 @@
 # Zapp
 
-Zapp is a Zcash mobile wallet with P2P fiat payments and DeFi integration. Users can send/receive ZEC, pay merchants using local payment rails (UPI, Alipay, PIX, etc.), and earn yield through NEAR-based DeFi protocols.
+Zapp is a privacy-first mobile wallet that bridges **Zcash shielded transactions** with local fiat payment rails through peer-to-peer matching, powered by **NEAR Intents** for cross-chain DeFi.
 
-The project has three components:
+**Pay anyone with ZEC—they receive local fiat (UPI, Alipay, PIX, etc.) privately and instantly.**
+
+## What Zapp Enables
+
+- **Private P2P Payments**: Send ZEC to pay anyone's local payment account (UPI ID, Alipay, etc.) without revealing transaction details
+- **Cross-Chain Privacy**: NEAR Intents handle ZEC↔NEAR bridging while preserving Zcash's shielded transaction privacy
+- **Private DeFi Yield**: Earn yield on idle ZEC through RHEA Finance pools without exposing positions
+- **Self-Custody Wallet**: Mobile-first iOS wallet with biometric auth and intuitive UX—your keys, your coins
+- **Anonymous Remittance**: Cross-border payments that hide sender, receiver, and amount
+
+## Grant Categories Addressed
+
+| Category | How Zapp Addresses It |
+|----------|----------------------|
+| **Cross-Chain Privacy Solutions** | NEAR Intents bridge ZEC↔NEAR while maintaining shielded transaction privacy |
+| **Private DeFi & Trading** | Yield earning via RHEA Finance pools with hidden positions and no front-running |
+| **Self-Custody & Wallet Innovation** | Mobile-first iOS wallet with biometric auth, shielded sends, and clean UX |
+| **Private Payments & Transactions** | P2P fiat payments via local rails (UPI, Alipay, PIX) with complete privacy |
+| **Privacy Infrastructure** | Zcash SDK integration, order matching system, cross-chain bridge coordination |
+
+## Architecture
 
 | Component | Description |
 |-----------|-------------|
-| **Zapp** | iOS wallet app (SwiftUI) |
+| **Zapp** | iOS wallet app (SwiftUI + Zcash SDK) |
 | **backend-zapp** | API server (Node.js/Express + MongoDB) |
-| **admin-zapp** | Merchant dashboard (React + Vite) |
+| **admin-zapp** | Facilitator dashboard (React + Vite) |
+
+---
+
+## How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  1. SCAN & PAY        2. ORDER MATCHED      3. FIAT SENT    4. ZEC SETTLED │
+│  ─────────────        ────────────────      ────────────    ──────────────│
+│  User scans           System matches        Facilitator     User's wallet  │
+│  recipient's          with facilitator      sends fiat      sends shielded │
+│  UPI/Alipay QR        who can fulfill       to recipient    ZEC to         │
+│  and enters           the local payment     via local       facilitator    │
+│  fiat amount                                payment rail                   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Result**: User pays with ZEC, recipient receives local fiat—privately, with no centralized exchange.
 
 ---
 
@@ -17,11 +55,11 @@ The project has three components:
 The mobile wallet for end users.
 
 **Features:**
-- Create/restore Zcash wallet
-- Send and receive ZEC
-- Pay merchants via P2P orders (scan QR → send ZEC → merchant sends fiat)
-- Earn yield via NEAR DeFi (Ref Finance pools)
-- Swap tokens via NEAR bridge
+- Create/restore Zcash shielded wallet
+- Send and receive ZEC with full transaction privacy
+- Pay anyone by scanning their payment QR (UPI, Alipay, PIX, PromptPay)
+- Earn yield via NEAR Intents (deposit ZEC → auto-bridge to NEAR → stake in RHEA Finance pools)
+- Biometric authentication for transactions
 
 **Setup:**
 
@@ -44,13 +82,14 @@ The mobile wallet for end users.
 
 ## backend-zapp (API Server)
 
-Handles merchant authentication, order management, and blockchain interactions.
+Handles facilitator authentication, order management, and blockchain interactions.
 
 **Features:**
-- Merchant OTP authentication
+- Facilitator OTP authentication
 - P2P order lifecycle (create → accept → fiat sent → complete)
-- ZEC↔NEAR bridging via Omni Bridge SDK
-- DeFi pool data from Ref Finance
+- **NEAR Intents integration** via Omni Bridge SDK for ZEC↔NEAR bridging
+- DeFi pool data from RHEA Finance
+- Intent-based execution: users specify desired outcome, backend orchestrates cross-chain flow
 
 **Requirements:**
 - Node.js 16+
@@ -86,15 +125,16 @@ Handles merchant authentication, order management, and blockchain interactions.
 
 ---
 
-## admin-zapp (Merchant Dashboard)
+## admin-zapp (Facilitator Dashboard)
 
-Web dashboard for merchants to manage their profile and orders.
+Web dashboard for facilitators to manage orders and earn spread on P2P transactions.
 
 **Features:**
-- Configure payment rails (UPI, Alipay, WeChat Pay, PIX, PromptPay)
-- View and accept pending orders
-- Track order status and mark completion
-- Analytics dashboard
+- View and accept pending orders in real-time
+- Scan recipient QR codes to send fiat payments
+- Configure supported payment rails (UPI, Alipay, WeChat Pay, PIX, PromptPay)
+- Track earnings and order history with analytics dashboard
+- Batch order support for multiple recipients
 
 **Setup:**
 
@@ -158,7 +198,7 @@ Web dashboard for merchants to manage their profile and orders.
 
 ## Demo Mode
 
-The admin dashboard supports demo mode for testing without authentication. The backend accepts a special demo token and uses the first merchant in the database.
+The admin dashboard supports demo mode for testing without authentication. The backend accepts a special demo token and uses the first facilitator in the database.
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "zapp-backend",
   "version": "1.0.0",
-  "description": "Backend API for Zapp merchant order (P2P) flow",
+  "description": "Backend API for Zapp facilitator order (P2P) flow",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {

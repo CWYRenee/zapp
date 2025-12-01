@@ -25,7 +25,7 @@ export function usePendingOrders() {
     queryKey: ['orders', 'pending'],
     queryFn: async () => {
       if (!token) return [] as ZapOrder[];
-      const data = await apiFetch<OrdersResponse>('/api/zapp/merchant/orders/pending', {
+      const data = await apiFetch<OrdersResponse>('/api/zapp/facilitator/orders/pending', {
         method: 'GET',
         token,
       });
@@ -43,7 +43,7 @@ export function useActiveOrders() {
     queryKey: ['orders', 'active'],
     queryFn: async () => {
       if (!token) return [] as ZapOrder[];
-      const data = await apiFetch<OrdersResponse>('/api/zapp/merchant/orders/active', {
+      const data = await apiFetch<OrdersResponse>('/api/zapp/facilitator/orders/active', {
         method: 'GET',
         token,
       });
@@ -61,7 +61,7 @@ export function useCompletedOrders() {
     queryKey: ['orders', 'completed'],
     queryFn: async () => {
       if (!token) return [] as ZapOrder[];
-      const data = await apiFetch<OrdersResponse>('/api/zapp/merchant/orders/completed', {
+      const data = await apiFetch<OrdersResponse>('/api/zapp/facilitator/orders/completed', {
         method: 'GET',
         token,
       });
@@ -79,7 +79,7 @@ export function useAcceptOrder() {
   return useMutation({
     mutationFn: async ({ orderId, zecAddress }: { orderId: string; zecAddress?: string }) => {
       if (!token) throw new Error('Not authenticated');
-      const data = await apiFetch<AcceptOrderResponse>(`/api/zapp/merchant/orders/${orderId}/accept`, {
+      const data = await apiFetch<AcceptOrderResponse>(`/api/zapp/facilitator/orders/${orderId}/accept`, {
         method: 'POST',
         token,
         body: zecAddress ? { zec_address: zecAddress } : {},
@@ -111,7 +111,7 @@ export function useMarkFiatSent() {
       if (paymentReference) body.payment_reference = paymentReference;
       if (notes) body.notes = notes;
 
-      const data = await apiFetch<UpdateOrderResponse>(`/api/zapp/merchant/orders/${orderId}/mark-fiat-sent`, {
+      const data = await apiFetch<UpdateOrderResponse>(`/api/zapp/facilitator/orders/${orderId}/mark-fiat-sent`, {
         method: 'POST',
         token,
         body,
@@ -143,7 +143,7 @@ export function useMarkZecReceived() {
       if (zecTxHash) body.zec_tx_hash = zecTxHash;
       if (notes) body.notes = notes;
 
-      const data = await apiFetch<UpdateOrderResponse>(`/api/zapp/merchant/orders/${orderId}/mark-zec-received`, {
+      const data = await apiFetch<UpdateOrderResponse>(`/api/zapp/facilitator/orders/${orderId}/mark-zec-received`, {
         method: 'POST',
         token,
         body,

@@ -63,11 +63,11 @@ export class RateService {
   }
 
   /**
-   * Compute ZEC amounts with 1% spread (0.5% to merchant, 0.5% to platform).
+   * Compute ZEC amounts with 1% spread (0.5% to facilitator, 0.5% to platform).
    * 
    * The spread works by reducing the effective exchange rate so users pay more ZEC.
    * - User pays at effective rate of (baseRate / 1.01)
-   * - Merchant receives at effective rate of (baseRate / 1.005)
+   * - Facilitator receives at effective rate of (baseRate / 1.005)
    * - Platform receives the difference (0.5% of fiat value in ZEC)
    */
   static async computeZecAmountWithSpread(
@@ -87,7 +87,7 @@ export class RateService {
     // User pays 1% more ZEC than base rate would indicate
     const userDisplayRate = baseRate / 1.01;
 
-    // Merchant pays out 0.5% more ZEC than base rate (half the spread)
+    // Facilitator pays out 0.5% more ZEC than base rate (half the spread)
     const merchantDisplayRate = baseRate / 1.005;
 
     // Calculate ZEC amounts

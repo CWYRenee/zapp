@@ -50,7 +50,7 @@ export function AnalyticsDashboard() {
       return acc;
     }, {} as Record<string, number>);
 
-    // Merchant spread earnings: extra ZEC vs base FX
+    // Facilitator spread earnings: extra ZEC vs base FX
     const totalEarnings = orders.reduce((sum, order) => {
       if (order.merchantZecAmount && order.baseExchangeRate) {
         const earnings =
@@ -175,26 +175,44 @@ export function AnalyticsDashboard() {
     ...metrics.earningsHistory.map((d) => d.earnings),
     0.00000001,
   );
-  const maxAvgTime = Math.max(
-    ...metrics.avgTimeHistory.map((d) => d.avgMinutes),
-    1,
-  );
 
-  const volumeLinePoints =
-    metrics.avgTimeHistory.length > 0
-      ? metrics.avgTimeHistory
-          .map((d, index) => {
-            const count = metrics.avgTimeHistory.length;
-            const x =
-              count === 1 ? 50 : (index / Math.max(count - 1, 1)) * 100;
-            const y =
-              maxAvgTime === 0
-                ? 100
-                : 100 - (d.avgMinutes / maxAvgTime) * 100;
-            return `${x},${y}`;
-          })
-          .join(' ')
-      : '';
+  // Format currency values for Y-axis labels
+  const formatAxisValue = (value: number, currency: string) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}k`;
+    }
+    return value.toLocaleString(undefined, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  };
+
+  // Generate Y-axis tick values for charts
+  const getYAxisTicks = (maxValue: number, tickCount: number = 4) => {
+    if (maxValue === 0) return [0];
+    const step = maxValue / (tickCount - 1);
+    return Array.from({ length: tickCount }, (_, i) => Math.round(step * i));
+  };
+
+  const volumeYTicks = getYAxisTicks(maxVolume);
+
+  // Format ZEC values for Y-axis labels
+  const formatZecAxisValue = (value: number) => {
+    if (value === 0) return '0';
+    if (value < 0.001) return value.toExponential(1);
+    if (value < 1) return value.toFixed(4);
+    return value.toFixed(2);
+  };
+
+  const getZecYAxisTicks = (maxValue: number, tickCount: number = 4) => {
+    if (maxValue === 0) return [0];
+    const step = maxValue / (tickCount - 1);
+    return Array.from({ length: tickCount }, (_, i) => step * i);
+  };
+
+  const earningsYTicks = getZecYAxisTicks(maxEarnings);
 
   return (
     <div className="space-y-6">
@@ -298,142 +316,212 @@ export function AnalyticsDashboard() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-base font-semibold text-gray-900">
-            Volume History (Last 7 Days)
-          </h3>
-          <div className="relative h-48">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-900">
+              Volume History
+            </h3>
+            <span className="text-xs text-gray-400">Last 7 days</span>
+          </div>
+          <div className="relative h-52">
             {metrics.volumeHistory.every((d) => d.volume === 0) ? (
               <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
                 No volume in the last 7 days
               </div>
             ) : (
-              <>
-                {volumeLinePoints && (
-                  <svg
-                    className="pointer-events-none absolute inset-0 h-full w-full"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    <polyline
-                      fill="none"
-                      stroke="#059669"
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      points={volumeLinePoints}
-                    />
-                  </svg>
-                )}
-                <div className="absolute inset-x-0 top-0 bottom-6 flex items-end justify-between gap-2">
-                  {metrics.volumeHistory.map((day) => {
-                    const avgForDay =
-                      metrics.avgTimeHistory.find((t) => t.date === day.date)
-                        ?.avgMinutes ?? 0;
-                    const barHeight =
-                      day.volume <= 0 || maxVolume <= 0
-                        ? 0
-                        : Math.max((day.volume / maxVolume) * 100, 8);
-
-                    return (
-                      <div
-                        key={day.date}
-                        className="group relative flex flex-1 items-end justify-center"
-                        style={{ height: '100%' }}
-                      >
-                        <div
-                          className="relative w-full max-w-[40px] rounded-t-sm bg-[#FF9417] transition-colors group-hover:bg-[#E68515]"
-                          style={{ height: `${barHeight}%` }}
-                        >
-                          <div className="absolute -top-10 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                            <div>
-                              {day.volume.toLocaleString(undefined, {
-                                style: 'currency',
-                                currency: baseFiatCurrency,
-                                minimumFractionDigits: 0,
-                              })}
-                            </div>
-                            <div className="mt-0.5 text-[10px] text-gray-300">
-                              Avg {Math.round(avgForDay * 60)} sec
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="absolute inset-x-0 bottom-0 flex justify-between gap-2">
-                  {metrics.volumeHistory.map((day) => (
-                    <span
-                      key={day.date}
-                      className="flex-1 text-center text-xs font-medium text-gray-500"
-                    >
-                      {day.dayLabel}
+              <div className="flex h-full">
+                {/* Y-axis labels */}
+                <div className="flex flex-col justify-between pr-3 text-right h-[calc(100%-24px)]">
+                  {[...volumeYTicks].reverse().map((tick, i) => (
+                    <span key={i} className="text-[10px] text-gray-400 leading-none">
+                      {formatAxisValue(tick, baseFiatCurrency)}
                     </span>
                   ))}
                 </div>
-              </>
+                
+                {/* Chart area */}
+                <div className="flex-1 relative">
+                  {/* Horizontal gridlines */}
+                  <div className="absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between pointer-events-none">
+                    {volumeYTicks.map((_, i) => (
+                      <div key={i} className="border-t border-gray-100 w-full" />
+                    ))}
+                  </div>
+                  
+                  {/* Bars */}
+                  <div className="absolute inset-x-0 top-0 bottom-6 flex items-end justify-between gap-1 sm:gap-2">
+                    {metrics.volumeHistory.map((day, index) => {
+                      const barHeight =
+                        day.volume <= 0 || maxVolume <= 0
+                          ? 0
+                          : Math.max((day.volume / maxVolume) * 100, 4);
+                      const isFirst = index === 0;
+                      const isLast = index === metrics.volumeHistory.length - 1;
+
+                      return (
+                        <div
+                          key={day.date}
+                          className="group relative flex flex-1 items-end justify-center"
+                          style={{ height: '100%' }}
+                        >
+                          <div
+                            className="relative w-full max-w-[48px] rounded-t bg-gradient-to-t from-[#FF9417] to-[#FFB347] shadow-sm transition-all duration-200 group-hover:from-[#E68515] group-hover:to-[#FF9417] group-hover:shadow-md"
+                            style={{ height: `${barHeight}%` }}
+                          >
+                            {/* Tooltip */}
+                            <div
+                              className={`absolute bottom-full mb-2 z-20 whitespace-nowrap rounded-lg bg-gray-900/95 backdrop-blur-sm px-3 py-2 text-xs text-white opacity-0 transition-all duration-200 group-hover:opacity-100 shadow-lg ${
+                                isFirst ? 'left-0' : isLast ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                              }`}
+                            >
+                              <div className="font-semibold text-sm">
+                                {day.volume.toLocaleString(undefined, {
+                                  style: 'currency',
+                                  currency: baseFiatCurrency,
+                                  minimumFractionDigits: 0,
+                                })}
+                              </div>
+                              <div className="mt-1 text-[10px] text-gray-300">
+                                {new Date(day.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  timeZone: 'UTC',
+                                })}
+                              </div>
+                              {/* Tooltip arrow */}
+                              <div
+                                className={`absolute top-full border-4 border-transparent border-t-gray-900/95 ${
+                                  isFirst ? 'left-4' : isLast ? 'right-4' : 'left-1/2 -translate-x-1/2'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* X-axis labels */}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 sm:gap-2">
+                    {metrics.volumeHistory.map((day) => (
+                      <span
+                        key={day.date}
+                        className="flex-1 text-center text-[10px] sm:text-xs font-medium text-gray-500"
+                      >
+                        {day.dayLabel}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
 
         <div className="rounded-lg border border-emerald-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-6 text-base font-semibold text-emerald-900">
-            Merchant Earnings (Last 7 Days)
-          </h3>
-          <div className="relative h-48">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-emerald-900">
+              Facilitator Earnings
+            </h3>
+            <span className="text-xs text-emerald-500">Last 7 days • ZEC</span>
+          </div>
+          <div className="relative h-52">
             {metrics.earningsHistory.every((d) => d.earnings === 0) ? (
               <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
                 No earnings in the last 7 days
               </div>
             ) : (
-              <>
-                <div className="absolute inset-x-0 top-0 bottom-6 flex items-end justify-between gap-2">
-                  {metrics.earningsHistory.map((day) => {
-                    const barHeight =
-                      day.earnings === 0
-                        ? 0
-                        : Math.max((day.earnings / maxEarnings) * 100, 8);
-
-                    return (
-                      <div
-                        key={day.date}
-                        className="group relative flex flex-1 items-end justify-center"
-                        style={{ height: '100%' }}
-                      >
-                        <div
-                          className="relative w-full max-w-[40px] rounded-t-sm bg-emerald-500 transition-colors group-hover:bg-emerald-600"
-                          style={{ height: `${barHeight}%` }}
-                        >
-                          <div className="absolute -top-10 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                            <div>{day.earnings.toFixed(6)} ZEC</div>
-                            {zecRateDisplay != null && (
-                              <div className="text-[10px] text-emerald-200">
-                                {(
-                                  day.earnings * zecRateDisplay
-                                ).toLocaleString(undefined, {
-                                  style: 'currency',
-                                  currency: displayCurrency,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="absolute inset-x-0 bottom-0 flex justify-between gap-2">
-                  {metrics.earningsHistory.map((day) => (
-                    <span
-                      key={day.date}
-                      className="flex-1 text-center text-xs font-medium text-gray-500"
-                    >
-                      {day.dayLabel}
+              <div className="flex h-full">
+                {/* Y-axis labels */}
+                <div className="flex flex-col justify-between pr-3 text-right h-[calc(100%-24px)]">
+                  {[...earningsYTicks].reverse().map((tick, i) => (
+                    <span key={i} className="text-[10px] text-gray-400 leading-none">
+                      {formatZecAxisValue(tick)}
                     </span>
                   ))}
                 </div>
-              </>
+                
+                {/* Chart area */}
+                <div className="flex-1 relative">
+                  {/* Horizontal gridlines */}
+                  <div className="absolute inset-x-0 top-0 bottom-6 flex flex-col justify-between pointer-events-none">
+                    {earningsYTicks.map((_, i) => (
+                      <div key={i} className="border-t border-emerald-50 w-full" />
+                    ))}
+                  </div>
+                  
+                  {/* Bars */}
+                  <div className="absolute inset-x-0 top-0 bottom-6 flex items-end justify-between gap-1 sm:gap-2">
+                    {metrics.earningsHistory.map((day, index) => {
+                      const barHeight =
+                        day.earnings === 0
+                          ? 0
+                          : Math.max((day.earnings / maxEarnings) * 100, 4);
+                      const isFirst = index === 0;
+                      const isLast = index === metrics.earningsHistory.length - 1;
+
+                      return (
+                        <div
+                          key={day.date}
+                          className="group relative flex flex-1 items-end justify-center"
+                          style={{ height: '100%' }}
+                        >
+                          <div
+                            className="relative w-full max-w-[48px] rounded-t bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-sm transition-all duration-200 group-hover:from-emerald-700 group-hover:to-emerald-500 group-hover:shadow-md"
+                            style={{ height: `${barHeight}%` }}
+                          >
+                            {/* Tooltip */}
+                            <div
+                              className={`absolute bottom-full mb-2 z-20 whitespace-nowrap rounded-lg bg-gray-900/95 backdrop-blur-sm px-3 py-2 text-xs text-white opacity-0 transition-all duration-200 group-hover:opacity-100 shadow-lg ${
+                                isFirst ? 'left-0' : isLast ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                              }`}
+                            >
+                              <div className="font-semibold text-sm text-emerald-300">
+                                {day.earnings.toFixed(6)} ZEC
+                              </div>
+                              {zecRateDisplay != null && (
+                                <div className="mt-0.5 text-[10px] text-gray-300">
+                                  ≈ {(
+                                    day.earnings * zecRateDisplay
+                                  ).toLocaleString(undefined, {
+                                    style: 'currency',
+                                    currency: displayCurrency,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </div>
+                              )}
+                              <div className="mt-1 text-[10px] text-gray-400">
+                                {new Date(day.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  timeZone: 'UTC',
+                                })}
+                              </div>
+                              {/* Tooltip arrow */}
+                              <div
+                                className={`absolute top-full border-4 border-transparent border-t-gray-900/95 ${
+                                  isFirst ? 'left-4' : isLast ? 'right-4' : 'left-1/2 -translate-x-1/2'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* X-axis labels */}
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between gap-1 sm:gap-2">
+                    {metrics.earningsHistory.map((day) => (
+                      <span
+                        key={day.date}
+                        className="flex-1 text-center text-[10px] sm:text-xs font-medium text-gray-500"
+                      >
+                        {day.dayLabel}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

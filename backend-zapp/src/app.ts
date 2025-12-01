@@ -23,8 +23,8 @@ export function createApp() {
   app.use('/api/zapp/orders', orderRoutes);
   app.use('/api/zapp/orders/batch', batchOrderRoutes);
   app.use('/api/zapp/admin/orders', adminOrderRoutes);
-  app.use('/api/zapp/merchant', merchantAuthRoutes);
-  app.use('/api/zapp/merchant', merchantRoutes);
+  app.use('/api/zapp/facilitator', merchantAuthRoutes);
+  app.use('/api/zapp/facilitator', merchantRoutes);
   app.use('/api/zapp/earn', earnRoutes);
 
   app.use(notFoundHandler);

@@ -3,7 +3,7 @@ import { MerchantAuthService } from '../services/merchantAuthService.js';
 
 const router = Router();
 
-// Request OTP for merchant login/signup
+// Request OTP for facilitator login/signup
 router.post('/auth/request-otp', async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
@@ -32,7 +32,7 @@ router.post('/auth/request-otp', async (req: Request, res: Response) => {
   }
 });
 
-// Verify OTP and issue JWT for merchant
+// Verify OTP and issue JWT for facilitator
 router.post('/auth/verify-otp', async (req: Request, res: Response) => {
   try {
     const { email, otp } = req.body;
@@ -45,12 +45,12 @@ router.post('/auth/verify-otp', async (req: Request, res: Response) => {
       });
     }
 
-    const { merchant, token } = await MerchantAuthService.verifyOtp(email, otp);
+    const { facilitator, token } = await MerchantAuthService.verifyOtp(email, otp);
 
     return res.status(200).json({
       success: true,
       token,
-      merchant,
+      facilitator,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to verify OTP';
