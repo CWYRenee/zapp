@@ -219,9 +219,14 @@ final class ZapOrderService: ZapOrderServicing {
     private let session: URLSession
     private let baseURL: URL
 
+    private static func defaultBaseURL() -> URL {
+        let baseURLString = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "https://zapp-backend-ik5q.onrender.com"
+        return URL(string: baseURLString) ?? URL(string: "https://zapp-backend-ik5q.onrender.com")!
+    }
+
     init(
         session: URLSession = .shared,
-        baseURL: URL = URL(string: "http://localhost:4001")!
+        baseURL: URL = ZapOrderService.defaultBaseURL()
     ) {
         self.session = session
         self.baseURL = baseURL

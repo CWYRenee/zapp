@@ -11,7 +11,7 @@ final class EarnAPIService {
     
     private init() {
         // Load from environment or use default
-        self.baseURL = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "http://localhost:4001"
+        self.baseURL = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "https://zapp-backend-ik5q.onrender.com"
         self.session = URLSession.shared
         
         self.jsonDecoder = JSONDecoder()

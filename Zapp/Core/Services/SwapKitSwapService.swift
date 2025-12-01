@@ -17,7 +17,7 @@ struct SwapKitSwapService {
     init(session: URLSession = .shared) {
         self.session = session
         // Get backend URL from environment, defaulting to localhost for development
-        self.backendURL = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "http://localhost:4001"
+        self.backendURL = ProcessInfo.processInfo.environment["ZAPP_API_URL"] ?? "https://zapp-backend-ik5q.onrender.com"
         // Check if we're in testnet mode
         self.isTestnet = (ProcessInfo.processInfo.environment["NEAR_ENV"] ?? "testnet") == "testnet"
     }
