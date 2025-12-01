@@ -4,18 +4,15 @@ import ZcashLightClientKit
 struct ZcashWalletConfig {
     let network: ZcashNetwork
     let endpoint: LightWalletEndpoint
-    let birthday: BlockHeight
     let seed: [UInt8]
 
     init(
         network: ZcashNetwork,
         endpoint: LightWalletEndpoint,
-        birthday: BlockHeight,
         seed: [UInt8]
     ) {
         self.network = network
         self.endpoint = endpoint
-        self.birthday = birthday
         self.seed = seed
     }
 
@@ -28,13 +25,9 @@ struct ZcashWalletConfig {
             streamingCallTimeoutInMillis: 10 * 60 * 60 * 1000
         )
 
-        // Same default birthday height used by the sample for testnet
-        let birthday: BlockHeight = 1_386_000
-
         return ZcashWalletConfig(
             network: network,
             endpoint: endpoint,
-            birthday: birthday,
             seed: seed
         )
     }

@@ -7,9 +7,14 @@ final class WalletOnboardingViewModel: ObservableObject {
     @Published var didComplete: Bool = false
 
     private let seedStore: WalletSeedStoring
+    private let metadataStore: WalletMetadataStoring
 
-    init(seedStore: WalletSeedStoring = WalletSeedStore()) {
+    init(
+        seedStore: WalletSeedStoring = WalletSeedStore(),
+        metadataStore: WalletMetadataStoring = WalletMetadataStore()
+    ) {
         self.seedStore = seedStore
+        self.metadataStore = metadataStore
     }
 
     func createNewWallet() {
@@ -20,6 +25,8 @@ final class WalletOnboardingViewModel: ObservableObject {
         do {
             try seedStore.saveSeed(seed)
             try seedStore.saveMnemonic(mnemonic)
+            metadataStore.saveOrigin(.new)
+            metadataStore.saveCreationDateIfMissing(Date())
             didComplete = true
         } catch {
             errorMessage = "Failed to save wallet."

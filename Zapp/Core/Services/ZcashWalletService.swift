@@ -56,6 +56,7 @@ enum WalletError: Error, LocalizedError {
 final class ZcashWalletService: WalletServicing {
 	private var config: ZcashWalletConfig?
 	private let seedStore: WalletSeedStoring
+	private let metadataStore: WalletMetadataStoring
 	private var cachedWallet: WalletInfo?
 	private var initializer: Initializer?
 	private var synchronizer: Synchronizer?
@@ -66,8 +67,12 @@ final class ZcashWalletService: WalletServicing {
 		syncStateSubject.eraseToAnyPublisher()
 	}
 
-	init(seedStore: WalletSeedStoring = WalletSeedStore()) {
+	init(
+		seedStore: WalletSeedStoring = WalletSeedStore(),
+		metadataStore: WalletMetadataStoring = WalletMetadataStore()
+	) {
 		self.seedStore = seedStore
+		self.metadataStore = metadataStore
 	}
 
 	func initializeWalletIfNeeded() async throws -> WalletInfo {
@@ -101,10 +106,28 @@ final class ZcashWalletService: WalletServicing {
 		}
 
 		if case .unprepared = synchronizer.latestState.syncStatus {
+			let origin = metadataStore.loadOrigin()
+			let creationDate = metadataStore.loadCreationDate()
+			let walletMode: WalletInitMode
+			let walletBirthday: BlockHeight
+
+			switch origin {
+			case .new:
+				let date = creationDate ?? Date()
+				walletBirthday = synchronizer.estimateBirthdayHeight(for: date)
+				walletMode = .newWallet
+			case .restored:
+				walletBirthday = config.network.constants.saplingActivationHeight
+				walletMode = .restoreWallet
+			case .none:
+				walletBirthday = config.network.constants.saplingActivationHeight
+				walletMode = .existingWallet
+			}
+
 			_ = try await synchronizer.prepare(
 				with: config.seed,
-				walletBirthday: config.birthday,
-				for: .existingWallet,
+				walletBirthday: walletBirthday,
+				for: walletMode,
 				name: "",
 				keySource: nil
 			)
@@ -406,6 +429,7 @@ final class ZcashWalletService: WalletServicing {
 	func resetWallet() async throws {
 		try await wipeSynchronizerIfNeeded()
 		try seedStore.clear()
+		metadataStore.clear()
 		config = nil
 		cachedWallet = nil
 		initializer = nil

@@ -56,6 +56,7 @@
 		E3648DD62EDA907600962E5A /* EarnPositionsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DCB2EDA907600962E5A /* EarnPositionsTab.swift */; };
 		E3648DD82EDBE58400962E5A /* PoolSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DD72EDBE58400962E5A /* PoolSelectionView.swift */; };
 		E3648DDE2EDC4A8F00962E5A /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E3648DDD2EDC4A8F00962E5A /* Media.xcassets */; };
+		E3648DE42EDDCA1600962E5A /* WalletMetadataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3648DE32EDDCA1600962E5A /* WalletMetadataStore.swift */; };
 		E382A5C02ED80D190089CD0D /* WordSearchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BE2ED80D190089CD0D /* WordSearchViewModel.swift */; };
 		E382A5C12ED80D190089CD0D /* WordSearchData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BC2ED80D190089CD0D /* WordSearchData.swift */; };
 		E382A5C22ED80D190089CD0D /* WordSearchGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E382A5BD2ED80D190089CD0D /* WordSearchGameView.swift */; };
@@ -119,6 +120,7 @@
 		E3648DCE2EDA907600962E5A /* EarnViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarnViewModel.swift; sourceTree = "<group>"; };
 		E3648DD72EDBE58400962E5A /* PoolSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoolSelectionView.swift; sourceTree = "<group>"; };
 		E3648DDD2EDC4A8F00962E5A /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
+		E3648DE32EDDCA1600962E5A /* WalletMetadataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletMetadataStore.swift; sourceTree = "<group>"; };
 		E382A5BC2ED80D190089CD0D /* WordSearchData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchData.swift; sourceTree = "<group>"; };
 		E382A5BD2ED80D190089CD0D /* WordSearchGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchGameView.swift; sourceTree = "<group>"; };
 		E382A5BE2ED80D190089CD0D /* WordSearchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordSearchViewModel.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 		E301F2112ED5E983000F07D7 /* Storage */ = {
 			isa = PBXGroup;
 			children = (
+				E3648DE32EDDCA1600962E5A /* WalletMetadataStore.swift */,
 				E301F20E2ED5E983000F07D7 /* WalletMnemonicCodec.swift */,
 				E301F20F2ED5E983000F07D7 /* WalletSeedStore.swift */,
 				E301F2102ED5E983000F07D7 /* WalletSyncState.swift */,
@@ -548,6 +551,7 @@
 				E301F2602ED5E983000F07D7 /* Zatoshi+TAZ.swift in Sources */,
 				E301F2612ED5E983000F07D7 /* SwapKitSwapService.swift in Sources */,
 				E301F2622ED5E983000F07D7 /* Theme.swift in Sources */,
+				E3648DE42EDDCA1600962E5A /* WalletMetadataStore.swift in Sources */,
 				E3B10AAA2EF98888000F07D7 /* BiometricAuthService.swift in Sources */,
 				E3B10AAB2EF98888000F07D7 /* BiometricSettingsStore.swift in Sources */,
 				E3B10AAC2EF98888000F07D7 /* BiometricSetupPromptView.swift in Sources */,
