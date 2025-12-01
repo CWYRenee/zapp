@@ -1,0 +1,14 @@
+# Netlify/Vercel deployment configuration for Zapp Admin Dashboard
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SPA routing - redirect all routes to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20"

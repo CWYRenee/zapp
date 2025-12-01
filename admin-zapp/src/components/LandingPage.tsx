@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Repeat, Wallet, TrendingUp, Globe, Lock, Smartphone, BarChart3 } from 'lucide-react';
+import { ArrowRight, Shield, Repeat, Wallet, TrendingUp, Globe, Lock, Smartphone, BarChart3, Github, Coffee, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 
-// Placeholder - replace with your actual TestFlight link once uploaded
-const TESTFLIGHT_URL = 'https://testflight.apple.com/join/YOUR_CODE';
+// Get started by cloning the repo from GitHub
+const GITHUB_URL = 'https://github.com/CWYRenee/zapp/tree/main';
+const ZEC_DONATION_ADDRESS = 'u1usdslx2p4vx7e4ya2l9fc796vju2j00ljctvx2wk3cglax2y7e4j7uwrerxnhyc3rchp4wy9p7pzlpze97eya07jkqpwrgz678j9j5tyrle0ut0tk74003lwdmvksvltamkv2mtzcrxl34hvzeqe34txljv3fzgrcy3zvalr7cclhnqu';
 
 export function LandingPage() {
-  const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chs=180x180&chl=${encodeURIComponent(TESTFLIGHT_URL)}&choe=UTF-8`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -49,7 +50,7 @@ export function LandingPage() {
           
           <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-10">
             Zapp connects Zcash's shielded privacy with local payment rails like UPI, Alipay, and PIX.
-            Send ZEC, your recipient gets fiat—privately and instantly through cross-chain P2P matching.
+            Send ZEC, your recipient gets fiat—privately and instantly through cross-chain P2P matching. This demo runs on testnet with test funds only.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -57,14 +58,14 @@ export function LandingPage() {
               to="/dashboard"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF9417] to-orange-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/25"
             >
-              Try Live Demo
+              Open Facilitator Dashboard (Web)
               <ArrowRight className="h-5 w-5" />
             </Link>
             <a
-              href="#how-it-works"
+              href="#download"
               className="inline-flex items-center gap-2 bg-white/10 text-white px-8 py-3.5 rounded-xl font-medium hover:bg-white/15 transition-colors border border-white/10"
             >
-              See How It Works
+              Run the iOS Wallet
             </a>
           </div>
         </div>
@@ -198,17 +199,36 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Download & CTA */}
+      {/* Try iOS App Section */}
       <section id="download" className="max-w-7xl mx-auto px-4 py-16">
         <div className="bg-gradient-to-br from-[#FF9417]/10 to-orange-600/5 rounded-2xl border border-[#FF9417]/20 p-8 md:p-12">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div className="grid md:grid-cols-[auto_1fr] gap-8 items-start">
+            {/* iOS App Demo GIF - Left */}
+            <div className="hidden md:block">
+              <img
+                src="/sim_recording.gif"
+                alt="Zapp iOS App Demo"
+                className="rounded-2xl shadow-2xl w-[240px] border border-gray-700"
+              />
+            </div>
+            
+            {/* Content - Middle */}
             <div>
               <h2 className="text-3xl font-bold text-white mb-4">
-                Try Zapp Today
+                Run the iOS App
               </h2>
               <p className="text-gray-400 mb-6">
-                Test the complete flow on Zcash testnet. No real funds required.
+                Clone the open-source iOS app and run it locally with Xcode on your device or simulator. This demo runs on testnet with test funds only.
               </p>
+              
+              {/* Mobile GIF */}
+              <div className="md:hidden mb-6">
+                <img
+                  src="/sim_recording.gif"
+                  alt="Zapp iOS App Demo"
+                  className="rounded-2xl shadow-2xl max-w-[200px] border border-gray-700"
+                />
+              </div>
               
               <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-3">
@@ -216,8 +236,8 @@ export function LandingPage() {
                     <span className="text-[#FF9417] text-xs font-bold">1</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Download iOS App</p>
-                    <p className="text-sm text-gray-400">Scan QR or visit TestFlight link</p>
+                    <p className="text-white font-medium">Clone from GitHub</p>
+                    <p className="text-sm text-gray-400">Open the Zapp repo and iOS project in Xcode</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -225,8 +245,8 @@ export function LandingPage() {
                     <span className="text-[#FF9417] text-xs font-bold">2</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Create a Wallet</p>
-                    <p className="text-sm text-gray-400">Get testnet ZEC from faucet</p>
+                    <p className="text-white font-medium">Build &amp; Run</p>
+                    <p className="text-sm text-gray-400">Run on your own iPhone or iOS simulator using your Apple ID</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -234,44 +254,39 @@ export function LandingPage() {
                     <span className="text-[#FF9417] text-xs font-bold">3</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Make a Payment</p>
-                    <p className="text-sm text-gray-400">Scan any UPI/Alipay QR and pay with ZEC</p>
+                    <p className="text-white font-medium">Explore Features</p>
+                    <p className="text-sm text-gray-400">Try payments, DeFi yield, and more</p>
                   </div>
                 </div>
               </div>
 
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 bg-[#FF9417] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E68515] transition-colors"
-              >
-                <BarChart3 className="h-5 w-5" />
-                Try Facilitator Dashboard
-              </Link>
-            </div>
-            
-            <div className="flex flex-col items-center">
-              <div className="bg-white rounded-2xl p-4 shadow-2xl">
-                <img
-                  src={qrCodeUrl}
-                  alt="Download Zapp on TestFlight"
-                  width={180}
-                  height={180}
-                  className="rounded-lg"
-                />
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 transition-colors"
+                >
+                  <Github className="h-5 w-5" />
+                  View iOS App on GitHub
+                </a>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 bg-[#FF9417] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#E68515] transition-colors"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  Open Facilitator Dashboard (Web)
+                </Link>
               </div>
-              <p className="text-sm text-gray-500 mt-4 text-center">
-                Scan with iPhone camera
+              
+              <p className="text-xs text-gray-500 mt-4">
+                Want to run on your iPhone? Clone the repo and build with Xcode.
               </p>
-              <a
-                href={TESTFLIGHT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 text-sm text-[#FF9417] hover:underline"
-              >
-                Open TestFlight link →
-              </a>
             </div>
           </div>
+          
+          {/* Support Section */}
+          <SupportSection />
         </div>
       </section>
 
@@ -321,6 +336,62 @@ function FeatureCard({ icon, title, description, tag }: { icon: React.ReactNode;
       </div>
       <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
       <p className="text-sm text-gray-400">{description}</p>
+    </div>
+  );
+}
+
+function SupportSection() {
+  const [copied, setCopied] = useState(false);
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(ZEC_DONATION_ADDRESS);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  return (
+    <div className="mt-8 pt-6 border-t border-gray-700/50">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center">
+            <Coffee className="h-4 w-4 text-yellow-500" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-300">Like what you see?</p>
+            <p className="text-xs text-gray-500">Support development with ZEC</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <img
+            src="/wallet_qr.jpeg"
+            alt="ZEC donation QR — buy me a coffee"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-lg border border-gray-700 transform transition-transform duration-150 hover:scale-150 origin-center"
+          />
+          <code className="text-[10px] text-gray-400 bg-gray-800 px-3 py-1.5 rounded-lg max-w-[200px] truncate">
+            {ZEC_DONATION_ADDRESS.slice(0, 20)}...{ZEC_DONATION_ADDRESS.slice(-8)}
+          </code>
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center gap-1.5 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-green-400" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                Copy
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

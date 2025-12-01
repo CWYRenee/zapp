@@ -235,9 +235,9 @@ struct PositionCard: View {
     private var statusContent: some View {
         switch position.status {
         case .pendingDeposit:
-            progressRow( text: "Waiting for ZEC deposit...", color: .orange)
+            progressRow(text: "Waiting for ZEC deposit...", color: .orange)
         case .bridgingToNear:
-            progressRow( text: "Bridging to NEAR...", color: .orange)
+            progressRow(text: "Bridging to NEAR...", color: .orange)
         case .bridgingToZcash:
             progressRow(text: "Withdrawing to Zcash...", color: .orange)
         case .completed:
@@ -251,17 +251,14 @@ struct PositionCard: View {
                 }
             }
         case .failed:
-            progressRow( text: "Transaction failed", color: .red)
+            progressRow(text: "Transaction failed", color: .red)
         default:
             EmptyView()
         }
     }
     
-    private func progressRow(icon: String, text: String, color: Color) -> some View {
+    private func progressRow(text: String, color: Color) -> some View {
         HStack(spacing: ZapSpacing.sm) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.caption)
             Text(text)
                 .font(.caption)
                 .foregroundColor(ZapColors.textSecondary)

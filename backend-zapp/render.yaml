@@ -1,0 +1,28 @@
+# Render.com deployment configuration for zapp-backend
+# Deploy: Connect your GitHub repo at https://dashboard.render.com
+
+services:
+  - type: web
+    name: zapp-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false  # Set this manually in Render dashboard
+      - key: ZAP_ADMIN_API_KEY
+        generateValue: true
+      - key: MERCHANT_JWT_SECRET
+        generateValue: true
+      - key: ZEC_FIAT_RATE
+        value: "50"
+      - key: NEAR_ENV
+        value: testnet
+      - key: BRIDGE_MODE
+        value: simulated

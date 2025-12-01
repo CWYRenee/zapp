@@ -2,10 +2,15 @@ import { env } from './config/env.js';
 import { connectDatabase } from './config/db.js';
 import { createApp } from './app.js';
 import { startJobs, stopJobs } from './jobs/index.js';
+import { seedDemoFacilitator } from './config/seedDemo.js';
 
 async function start() {
   try {
     await connectDatabase();
+    
+    // Ensure demo facilitator exists for demo mode
+    await seedDemoFacilitator();
+    
     const app = createApp();
 
     app.listen(env.PORT, () => {

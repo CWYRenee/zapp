@@ -3,6 +3,12 @@ import Combine
 
 @MainActor
 final class EarnViewModel: ObservableObject {
+    
+    // MARK: - Biometric Authentication
+    
+    private let biometricService = BiometricAuthService.shared
+    private let biometricSettings = BiometricSettingsStore.shared
+    
     // MARK: - Published Properties
     
     // UI State
@@ -340,6 +346,28 @@ final class EarnViewModel: ObservableObject {
             return
         }
         
+        // Biometric authentication for deposit
+        if biometricSettings.shouldRequireBiometric() {
+            do {
+                let authenticated = try await biometricService.authenticateForTransaction()
+                guard authenticated else {
+                    errorMessage = "Authentication required to deposit."
+                    return
+                }
+            } catch let error as BiometricAuthService.BiometricError {
+                switch error {
+                case .userCancelled:
+                    return // User cancelled, just return without error
+                default:
+                    errorMessage = error.localizedDescription
+                    return
+                }
+            } catch {
+                errorMessage = "Authentication failed: \(error.localizedDescription)"
+                return
+            }
+        }
+        
         isSendingDeposit = true
         errorMessage = nil
         depositTransactionSent = false
@@ -529,6 +557,32 @@ final class EarnViewModel: ObservableObject {
     func initiateWithdrawal(position: EarnPositionSummary) async {
         isWithdrawing = true
         errorMessage = nil
+        
+        // Biometric authentication for withdrawal
+        if biometricSettings.shouldRequireBiometric() {
+            do {
+                let authenticated = try await biometricService.authenticateForTransaction()
+                guard authenticated else {
+                    errorMessage = "Authentication required to withdraw."
+                    isWithdrawing = false
+                    return
+                }
+            } catch let error as BiometricAuthService.BiometricError {
+                switch error {
+                case .userCancelled:
+                    isWithdrawing = false
+                    return // User cancelled, just return without error
+                default:
+                    errorMessage = error.localizedDescription
+                    isWithdrawing = false
+                    return
+                }
+            } catch {
+                errorMessage = "Authentication failed: \(error.localizedDescription)"
+                isWithdrawing = false
+                return
+            }
+        }
         
         // Use the original Zcash address for withdrawal
         let withdrawAddress = withdrawToAddress.isEmpty ? zcashWalletAddress : withdrawToAddress
