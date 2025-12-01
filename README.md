@@ -30,6 +30,96 @@ Zapp is a privacy-first mobile wallet that bridges **Zcash shielded transactions
 | **backend-zapp** | API server (Node.js/Express + MongoDB) |
 | **admin-zapp** | Facilitator dashboard (React + Vite) |
 
+## Hosted demo (recommended)
+
+This repo includes a **testnet demo** that uses a live backend, MongoDB Atlas database, and hosted facilitator dashboard. You can build the iOS app on your own device and it will connect to this live stack by default.
+
+- **Backend (API)**: `https://zapp-backend-ik5q.onrender.com`
+- **Facilitator dashboard**: `https://zapp-demo.vercel.app/`
+- **Network**: testnet only with test funds
+
+### 1. Run the iOS wallet connected to the live backend
+
+Requirements:
+
+- macOS with Xcode 15+
+- An iPhone or iOS simulator
+- Git
+
+Steps:
+
+```bash
+git clone https://github.com/CWYRenee/zapp.git
+cd zapp/Zapp
+cp .env.example .env        # keeps ZAPP_API_URL pointing at the hosted backend
+open Zapp.xcodeproj
+```
+
+Then in Xcode:
+
+1. Select a device or simulator.
+2. Build & Run.
+
+The wallet will:
+
+- Use the hosted backend and shared Atlas demo database
+- Operate on **testnet** (no real ZEC required)
+
+### 2. Open the live facilitator dashboard
+
+Open:
+
+```text
+https://zapp-demo.vercel.app/
+```
+
+This dashboard:
+
+- Shows the **facilitator view** for the demo
+- Auto-logs into a shared demo facilitator (no email/password UI in this demo)
+- May take **30–60 seconds to respond after inactivity** because the free Render backend spins down; if it seems stuck, wait a bit and refresh
+
+### 3. Facilitators and QR payment rails
+
+In Zapp’s design:
+
+- **App users** pay with ZEC from the mobile wallet
+- **Recipients** only need a local payment QR (UPI, Alipay, PIX, PromptPay, etc.)
+- **Facilitators** sit in the middle:
+  - They sign in to the admin dashboard
+  - They see pending ZEC→fiat orders from app users
+  - They send fiat via local rails by scanning the same QR code
+  - They receive ZEC on-chain in return
+
+Think of facilitators as a **human / operational layer on top of QR payment rails**, making the fiat payments on users’ behalf.
+
+For this **demo**:
+
+- A single shared facilitator account is preconfigured in the backend
+- The dashboard auto-logs into that account for convenience
+
+In a **production deployment**:
+
+- Facilitators would **sign up** and log in with their own credentials (email + password or similar)
+- Each facilitator would only see and manage **their own** orders, rails configuration, and earnings
+- The admin dashboard would be a multi-tenant system rather than a shared demo view
+
+## Local development setup (optional)
+
+If you prefer to run everything locally instead of using the hosted demo:
+
+- Run MongoDB (or Atlas)
+- Start `backend-zapp` on `http://localhost:4001`
+- Point `admin-zapp` at that URL via `VITE_API_URL`
+- Point the iOS app at that URL via `ZAPP_API_URL`
+
+Detailed step‑by‑step instructions are in the sections below:
+
+- **Zapp (iOS App)**
+- **backend-zapp (API Server)**
+- **admin-zapp (Facilitator Dashboard)**
+- **Quick Start (All Components)**
+
 ---
 
 ## How It Works
