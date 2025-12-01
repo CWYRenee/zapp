@@ -2,6 +2,8 @@
 
 Zapp is a privacy-first mobile wallet that bridges **Zcash shielded transactions** with local fiat payment rails through peer-to-peer matching, powered by **NEAR Intents** for cross-chain DeFi.
 
+Try it out on testnet: https://zapp-demo.vercel.app
+
 **Pay anyone with ZEC—they receive local fiat (UPI, Alipay, PIX, etc.) privately and instantly.**
 
 ## What Zapp Enables
