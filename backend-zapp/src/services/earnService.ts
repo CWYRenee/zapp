@@ -505,6 +505,10 @@ export class EarnService {
       }
     }
     
+    if (typeof actualZecReceived === 'number') {
+      position.currentValue = actualZecReceived;
+    }
+    
     this.appendStatus(
       position,
       'completed',

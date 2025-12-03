@@ -611,11 +611,49 @@ final class EarnViewModel: ObservableObject {
             
             selectedPosition = updatedPosition
             await loadUserStats()
+            
+            Task { [weak self] in
+                guard let self else { return }
+                await self.monitorWithdrawal(positionId: updatedPosition.positionId)
+            }
         } catch {
             errorMessage = "Failed to initiate withdrawal: \(error.localizedDescription)"
         }
         
         isWithdrawing = false
+    }
+    
+    func monitorWithdrawal(positionId: String) async {
+        let maxAttempts = 60
+        let delayNanoseconds: UInt64 = 10 * 1_000_000_000
+        
+        for _ in 0..<maxAttempts {
+            do {
+                let latestPosition = try await apiService.getPosition(
+                    positionId: positionId,
+                    userWalletAddress: zcashWalletAddress
+                )
+                
+                if let index = positions.firstIndex(where: { $0.positionId == latestPosition.positionId }) {
+                    positions[index] = latestPosition
+                } else {
+                    positions.insert(latestPosition, at: 0)
+                }
+                
+                if selectedPosition?.positionId == latestPosition.positionId {
+                    selectedPosition = latestPosition
+                }
+                
+                if !latestPosition.status.isInProgress {
+                    await loadUserStats()
+                    break
+                }
+            } catch {
+                break
+            }
+            
+            try? await Task.sleep(nanoseconds: delayNanoseconds)
+        }
     }
     
     // MARK: - Computed Properties

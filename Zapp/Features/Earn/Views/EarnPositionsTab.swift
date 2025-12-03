@@ -311,49 +311,46 @@ struct PositionDetailSheet: View {
     let position: EarnPositionSummary
     @Environment(\.dismiss) private var dismiss
     @State private var showWithdrawConfirmation: Bool = false
+    @AppStorage("handPreference") private var handPreference: String = "right"
+    
+    private var isRightHanded: Bool { handPreference != "left" }
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: ZapSpacing.xl) {
-                    // Status Header
-                    statusHeader
-                    
-                    // Value Section
-                    valueSection
-                    
-                    // Earnings Chart (if active)
-                    if position.status.isActive {
-                        earningsChartSection
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: ZapSpacing.xl) {
+                        // Status Header
+                        statusHeader
+                        
+                        // Value Section
+                        valueSection
+                        
+                        // Earnings Chart (if active)
+                        if position.status.isActive {
+                            earningsChartSection
+                        }
+                        
+                        // Details Section
+                        detailsSection
+                        
+                        // Actions based on status
+                        if position.status.isActive {
+                            actionsSection
+                        } else if position.status == .completed {
+                            completedSection
+                        }
+                        
+                        Spacer(minLength: ZapSpacing.xl)
                     }
-                    
-                    // Details Section
-                    detailsSection
-                    
-                    // Actions based on status
-                    if position.status.isActive {
-                        actionsSection
-                    } else if position.status == .completed {
-                        completedSection
-                    }
-                    
-                    Spacer(minLength: ZapSpacing.xl)
+                    .padding(.horizontal, ZapSpacing.xl)
+                    .padding(.top, ZapSpacing.lg)
                 }
-                .padding(.horizontal, ZapSpacing.xl)
-                .padding(.top, ZapSpacing.lg)
+                
+                bottomCloseButton
             }
             .navigationTitle("Position Details")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(ZapColors.textSecondary)
-                    }
-                }
-            }
             .task {
                 await viewModel.selectPosition(position)
             }
@@ -366,7 +363,7 @@ struct PositionDetailSheet: View {
                     }
                 }
             } message: {
-                Text("Withdraw \(String(format: "%.6f ZEC", position.currentValue)) including earnings back to your shielded wallet?")
+                Text("Withdraw \(String(format: "%.6f ZEC", position.currentValue)) including earnings back to your wallet?")
             }
         }
     }
@@ -462,7 +459,7 @@ struct PositionDetailSheet: View {
         case .bridgingToZcash:
             return "Withdrawing funds back to your Zcash wallet"
         case .completed:
-            return "Funds successfully returned to your shielded wallet"
+            return "Funds successfully returned to your wallet"
         case .failed:
             return "Transaction failed. Please contact support."
         default:
@@ -610,14 +607,14 @@ struct PositionDetailSheet: View {
     private var actionsSection: some View {
         VStack(spacing: ZapSpacing.sm) {
             ZapButton(
-                "Withdraw to Shielded Wallet",
+                "Withdraw to Wallet",
                 style: .primary,
                 isLoading: viewModel.isWithdrawing
             ) {
                 showWithdrawConfirmation = true
             }
             
-            Text("Funds will be returned to your shielded Zcash address")
+            Text("Funds will be returned to your Zcash address")
                 .font(.caption)
                 .foregroundColor(ZapColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -669,6 +666,33 @@ struct PositionDetailSheet: View {
             .background(Color.green.opacity(0.1))
             .cornerRadius(ZapRadius.medium)
         }
+    }
+    
+    private var bottomCloseButton: some View {
+        HStack {
+            if isRightHanded {
+                Spacer()
+            }
+            
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(ZapColors.primary)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 4)
+            }
+            .buttonStyle(.plain)
+            
+            if !isRightHanded {
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ZapSpacing.xl)
+        .padding(.bottom, ZapSpacing.xl)
     }
 }
 
