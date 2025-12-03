@@ -25,8 +25,8 @@ const ZCASH_API_KEY = process.env.ZCASH_API_KEY || '';
 
 // NEAR RPC endpoints
 const NEAR_RPC = {
-  testnet: 'https://rpc.testnet.near.org',
-  mainnet: 'https://rpc.mainnet.near.org',
+  testnet: process.env.NEAR_RPC_URL_TESTNET || 'https://rpc.testnet.near.org',
+  mainnet: process.env.NEAR_RPC_URL_MAINNET || 'https://1rpc.io/near',
 };
 
 // Ref Finance contract addresses
@@ -73,50 +73,113 @@ export interface TransactionResult {
 }
 
 /**
- * Create a near-kit compatible wrapper around near-api-js Account
- * The NearBridgeClient expects an object with view() and call() methods
+ * Create a near-kit compatible wrapper around near-api-js Account.
+ * NearBridgeClient expects an object with view(), transaction(), and getTransactionStatus().
  */
 function createNearKitWrapper(account: Account, connection: any) {
+  // Helper to parse near-kit gas strings like "300 Tgas" into yocto gas strings
+  const parseGas = (gas?: string): string | undefined => {
+    if (!gas) return undefined;
+    const trimmed = gas.trim();
+    if (trimmed.toLowerCase().endsWith('tgas')) {
+      const numPart = trimmed.slice(0, -4).trim();
+      let tgas = BigInt(numPart || '0');
+      // Ensure a minimum of 300 Tgas for heavy bridge operations
+      const minTgas = 300n;
+      if (tgas < minTgas) {
+        tgas = minTgas;
+      }
+      const yoctoGas = tgas * 10n ** 12n; // 1 Tgas = 1e12 gas units
+      return yoctoGas.toString();
+    }
+    return trimmed;
+  };
+
+  // Helper to parse deposits like "1 yocto" or `${amount} yocto`
+  const parseDeposit = (value: unknown): string | undefined => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'bigint') return value.toString();
+    if (typeof value === 'number') return BigInt(value).toString();
+    const asString = String(value).trim();
+    if (asString.toLowerCase().endsWith('yocto')) {
+      const numPart = asString.slice(0, -5).trim();
+      return (numPart ? BigInt(numPart) : 0n).toString();
+    }
+    return asString;
+  };
+
   return {
     accountId: account.accountId,
-    
-    // View call (read-only) - needs to handle args encoding properly
+
+    // View call (read-only)
     async view(contractId: string, methodName: string, args: Record<string, any> = {}) {
       try {
-        // Use the account's viewFunction (old API signature)
-        const result = await (account as any).viewFunction(contractId, methodName, args);
-        return result;
-      } catch (error) {
-        // If that fails, try direct RPC call with base64 encoded args
-        const argsBase64 = Buffer.from(JSON.stringify(args)).toString('base64');
-        const response = await connection.connection.provider.query({
-          request_type: 'call_function',
-          finality: 'final',
-          account_id: contractId,
-          method_name: methodName,
-          args_base64: argsBase64,
-        });
-        // Decode the result
-        const resultBuffer = Buffer.from((response as any).result);
-        return JSON.parse(resultBuffer.toString());
+        // Prefer near-api-js viewFunction when available
+        const result = await (account as any).viewFunction?.(contractId, methodName, args);
+        if (result !== undefined) {
+          return result;
+        }
+      } catch {
+        // Fallback to direct RPC below
       }
-    },
-    
-    // Call with transaction (write)
-    async call(contractId: string, methodName: string, args: Record<string, any> = {}, gas?: string, deposit?: string) {
-      const result = await (account as any).functionCall({
-        contractId,
-        methodName,
-        args,
-        gas: gas || undefined,
-        attachedDeposit: deposit || undefined,
+
+      const argsBase64 = Buffer.from(JSON.stringify(args)).toString('base64');
+      const provider = connection?.connection?.provider ?? connection?.provider ?? connection;
+      const response = await provider.query({
+        request_type: 'call_function',
+        finality: 'final',
+        account_id: contractId,
+        method_name: methodName,
+        args_base64: argsBase64,
       });
-      return result;
+      const resultBuffer = Buffer.from((response as any).result);
+      return JSON.parse(resultBuffer.toString());
     },
-    
-    // Get account for signing
+
+    // Transaction builder used by NearBridgeClient
+    transaction(signerId: string) {
+      const acct = account; // Single-account backend; signerId maps to this account
+      return {
+        functionCall: (
+          contractId: string,
+          methodName: string,
+          args: Record<string, any> = {},
+          options?: { gas?: string; attachedDeposit?: unknown },
+        ) => {
+          return {
+            // NearBridgeClient calls send({ waitUntil: "FINAL" })
+            async send(_opts?: { waitUntil?: string }) {
+              const gas = parseGas(options?.gas);
+              const attachedDeposit = parseDeposit(options?.attachedDeposit);
+              const res = await (acct as any).functionCall({
+                contractId,
+                methodName,
+                args,
+                gas,
+                attachedDeposit,
+              });
+              return res;
+            },
+          };
+        },
+      };
+    },
+
+    // Expose raw account if needed
     getAccount() {
       return account;
+    },
+
+    // Used by finalizeUtxoWithdrawal to inspect NEAR tx receipts
+    async getTransactionStatus(txHash: string, senderId: string, _finality: string) {
+      const provider = connection?.connection?.provider ?? connection?.provider ?? connection;
+      if (typeof provider.txStatusReceipts === 'function') {
+        return provider.txStatusReceipts(txHash, senderId);
+      }
+      if (typeof provider.txStatus === 'function') {
+        return provider.txStatus(txHash, senderId);
+      }
+      throw new Error('NEAR provider does not support transaction status queries');
     },
   };
 }
@@ -183,7 +246,8 @@ export class OmniBridgeService {
     this.nearConnection = await connect({
       networkId: NETWORK,
       keyStore,
-      nodeUrl: NEAR_RPC[NETWORK],
+      // Prefer env-configured NEAR RPC, fall back to Omni Bridge SDK defaults
+      nodeUrl: NEAR_RPC[NETWORK] || addresses.near.rpcUrls[0],
       headers: {},
     });
 
@@ -203,11 +267,11 @@ export class OmniBridgeService {
     const near = await this.getNearConnection();
     const account = await near.account(nearAccountId);
     
-    // Create a wrapper that implements the interface near-kit expects
+    // Wrap near-api-js Account into a near-kit compatible interface
     const wrapper = createNearKitWrapper(account, near);
-
     const client = new NearBridgeClient(wrapper as any, addresses.near.contract, {
       zcashApiKey: ZCASH_API_KEY,
+      defaultSignerId: nearAccountId,
     });
 
     this.bridgeClients.set(nearAccountId, client);

@@ -22,6 +22,12 @@ const TATUM_RPC_URL = isTestnet
   ? 'https://zcash-testnet.gateway.tatum.io'
   : 'https://zcash-mainnet.gateway.tatum.io';
 
+const DEFAULT_TESTNET_EXPLORER_URL = 'https://api.testnet.cipherscan.app';
+const DEFAULT_MAINNET_EXPLORER_URL = 'https://cipherscan.app/api';
+const EXPLORER_API_URL = isTestnet
+  ? process.env.ZCASH_TESTNET_EXPLORER_URL || DEFAULT_TESTNET_EXPLORER_URL
+  : process.env.ZCASH_MAINNET_EXPLORER_URL || DEFAULT_MAINNET_EXPLORER_URL;
+
 // Log configuration
 console.log(`[ZcashBlockchain] Initialized:`);
 console.log(`[ZcashBlockchain]   Network: ${NETWORK}`);
@@ -64,6 +70,22 @@ export interface AddressTransactions {
   address: string;
   transactions: TransactionInfo[];
   balance: number;
+}
+
+interface ExplorerAddressTransaction {
+  txid: string;
+  timestamp: number;
+  amount: number;
+  type: string;
+  blockHeight: number | null;
+}
+
+interface ExplorerAddressResponse {
+  address: string;
+  type: string;
+  balance: number;
+  transactionCount: number;
+  transactions: ExplorerAddressTransaction[];
 }
 
 /**
@@ -149,16 +171,34 @@ export class ZcashBlockchainService {
     }
   }
 
+  private static async fetchExplorerAddress(
+    address: string,
+  ): Promise<ExplorerAddressResponse | null> {
+    if (!EXPLORER_API_URL) {
+      return null;
+    }
+
+    try {
+      const response = await axios.get<ExplorerAddressResponse>(
+        `${EXPLORER_API_URL}/api/address/${encodeURIComponent(address)}`,
+        { timeout: 15000 },
+      );
+      return response.data;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      console.warn(`[ZcashBlockchain] Failed to fetch address ${address} from explorer: ${msg}`);
+      return null;
+    }
+  }
+
   /**
    * Get address balance using Zcash RPC
    * Note: Zcash RPC doesn't have a direct address balance method for transparent addresses
    * We need to scan UTXOs or use an indexer. For bridge addresses, we track via tx history.
    */
-  private static async getAddressBalance(_address: string): Promise<number> {
-    // Zcash RPC doesn't support direct address balance queries
-    // The balance is calculated from UTXOs, which requires wallet support
-    // For our use case (bridge deposits), we track via transaction verification
-    return 0;
+  private static async getAddressBalance(address: string): Promise<number> {
+    const data = await this.fetchExplorerAddress(address);
+    return data?.balance ?? 0;
   }
 
   /**
@@ -166,11 +206,35 @@ export class ZcashBlockchainService {
    * Note: Zcash RPC requires the address to be in the wallet for getaddresstxids
    * For bridge deposits, we verify individual transactions instead
    */
-  private static async getAddressTransactionHistory(_address: string): Promise<TransactionInfo[]> {
-    // Standard Zcash RPC doesn't support address transaction indexing
-    // without the address being imported into the wallet
-    // The deposit watcher verifies individual transactions by txid instead
-    return [];
+  private static async getAddressTransactionHistory(address: string): Promise<TransactionInfo[]> {
+    const data = await this.fetchExplorerAddress(address);
+    if (!data || !data.transactions || data.transactions.length === 0) {
+      return [];
+    }
+
+    const blockchainInfo = await this.getBlockchainInfo();
+    const bestHeight = blockchainInfo?.blocks ?? null;
+
+    const results: TransactionInfo[] = [];
+
+    for (const tx of data.transactions) {
+      const details = await this.getTransactionDetails(tx.txid);
+      if (!details) {
+        continue;
+      }
+
+      const confirmations =
+        bestHeight && details.blockHeight
+          ? Math.max(bestHeight - details.blockHeight + 1, 0)
+          : details.confirmations;
+
+      results.push({
+        ...details,
+        confirmations,
+      });
+    }
+
+    return results;
   }
 
   /**

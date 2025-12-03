@@ -105,7 +105,7 @@ export class EarnService {
    * Create a new earn position after user sends ZEC to bridge
    */
   static async createPosition(input: CreateEarnPositionInput): Promise<EarnPositionDocument> {
-    const { userWalletAddress, zecAmount, metadata, poolId } = input;
+    const { userWalletAddress, zecAmount, metadata, poolId, bridgeInfo } = input;
     
     // Validate address
     if (!NEARIntentsService.isValidZcashAddress(userWalletAddress)) {
@@ -115,20 +115,24 @@ export class EarnService {
       throw new Error('Amount must be greater than zero');
     }
     
-    // Get current protocol info
+    // Get current protocol info (for APY and min/max config)
     const protocolInfo = await NEARIntentsService.getRefProtocolInfo();
     
-    // Get bridge deposit info (SwapKit / simulated fallback)
-    const bridgeInfo = await NEARIntentsService.getBridgeDepositAddress(userWalletAddress, zecAmount);
+    // Reuse the bridge info provided by the frontend when available so that
+    // the bridge address and NEAR intent exactly match what the wallet used
+    // when sending ZEC/TAZ. Fallback to generating a new bridge address only
+    // if no bridge info was provided (e.g. legacy clients).
+    const effectiveBridgeInfo = bridgeInfo
+      ?? await NEARIntentsService.getBridgeDepositAddress(userWalletAddress, zecAmount);
     
     // Build pending deposit info for the automated watcher
     // This is stored in metadata and used by bridgeDepositWatcher
     const pendingDeposit = {
-      bridgeAddress: bridgeInfo.bridgeAddress,
-      depositArgs: bridgeInfo.depositArgs || '',
-      nearAccountId: bridgeInfo.nearAccountId || '',
-      minDepositZec: bridgeInfo.minDepositZec || 0.001,
-      expectedAmount: bridgeInfo.expectedAmount,
+      bridgeAddress: effectiveBridgeInfo.bridgeAddress,
+      depositArgs: effectiveBridgeInfo.depositArgs || '',
+      nearAccountId: effectiveBridgeInfo.nearAccountId || '',
+      minDepositZec: effectiveBridgeInfo.minDepositZec || protocolInfo.minDeposit,
+      expectedAmount: effectiveBridgeInfo.expectedAmount,
       createdAt: new Date().toISOString(),
     };
     
@@ -149,8 +153,8 @@ export class EarnService {
       nearAmount: 0,
       currentValue: 0,
       accruedInterest: 0,
-      bridgeDepositAddress: bridgeInfo.bridgeAddress,
-      nearIntentId: bridgeInfo.nearIntentId,
+      bridgeDepositAddress: effectiveBridgeInfo.bridgeAddress,
+      nearIntentId: effectiveBridgeInfo.nearIntentId,
       depositApy: protocolInfo.currentApy,
       currentApy: protocolInfo.currentApy,
       status: 'pending_deposit',
@@ -350,7 +354,7 @@ export class EarnService {
     }
     
     // Validate withdrawal address (supports unified addresses)
-    if (!NEARIntentsService.isValidZcashAddress(withdrawToAddress)) {
+    if (!NEARIntentsService.isValidTransparentZcashAddress(withdrawToAddress)) {
       throw new Error('Invalid Zcash withdrawal address');
     }
     

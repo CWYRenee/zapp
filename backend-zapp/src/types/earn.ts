@@ -92,6 +92,8 @@ export interface CreateEarnPositionInput {
   /** Optional RHEA pool ID selected by the user */
   poolId?: string;
   metadata?: Record<string, unknown>;
+  /** Optional bridge info from /deposit/prepare to reuse bridge address and intent */
+  bridgeInfo?: BridgeDepositInfo;
 }
 
 /**

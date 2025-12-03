@@ -341,6 +341,12 @@ export class NEARIntentsService {
     return validPrefixes.some(prefix => address.startsWith(prefix));
   }
 
+  static isValidTransparentZcashAddress(address: string): boolean {
+    if (!this.isValidZcashAddress(address)) return false;
+    const base58Regex = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/;
+    return base58Regex.test(address);
+  }
+
   /**
    * Get bridge health status
    */

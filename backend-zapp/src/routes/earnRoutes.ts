@@ -354,10 +354,14 @@ router.post('/deposit/finalize', async (req: Request, res: Response) => {
 /**
  * POST /api/zapp/earn/positions
  * Create a new earn position after sending ZEC to bridge
+ *
+ * The frontend should pass the same bridge_info object that was returned by
+ * /api/zapp/earn/deposit/prepare so that the backend reuses the exact
+ * bridge address and NEAR intent used by the wallet when sending ZEC/TAZ.
  */
 router.post('/positions', async (req: Request, res: Response) => {
   try {
-    const { user_wallet_address, zec_amount, metadata, pool_id } = req.body;
+    const { user_wallet_address, zec_amount, metadata, pool_id, bridge_info } = req.body;
     
     if (!user_wallet_address || !zec_amount) {
       return res.status(400).json({
@@ -372,6 +376,7 @@ router.post('/positions', async (req: Request, res: Response) => {
       zecAmount: Number(zec_amount),
       metadata,
       ...(pool_id ? { poolId: String(pool_id) } : {}),
+      ...(bridge_info ? { bridgeInfo: bridge_info } : {}),
     };
     
     const position = await EarnService.createPosition(input);

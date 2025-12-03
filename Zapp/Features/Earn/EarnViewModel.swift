@@ -444,7 +444,8 @@ final class EarnViewModel: ObservableObject {
             let position = try await apiService.createPosition(
                 userWalletAddress: zcashWalletAddress,
                 zecAmount: depositAmountDouble,
-                poolId: selectedPool?.id
+                poolId: selectedPool?.id,
+                bridgeInfo: bridgeDepositInfo
             )
             
             // Store position ID for potential finalization
@@ -585,7 +586,15 @@ final class EarnViewModel: ObservableObject {
         }
         
         // Use the original Zcash address for withdrawal
-        let withdrawAddress = withdrawToAddress.isEmpty ? zcashWalletAddress : withdrawToAddress
+        let defaultTransparent = walletViewModel?.walletInfo?.transparentAddress ?? ""
+        let withdrawAddress: String
+        if !withdrawToAddress.isEmpty {
+            withdrawAddress = withdrawToAddress
+        } else if !defaultTransparent.isEmpty {
+            withdrawAddress = defaultTransparent
+        } else {
+            withdrawAddress = zcashWalletAddress
+        }
         
         do {
             let updatedPosition = try await apiService.initiateWithdrawal(

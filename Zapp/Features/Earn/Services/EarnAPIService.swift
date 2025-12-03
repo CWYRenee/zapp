@@ -103,10 +103,18 @@ final class EarnAPIService {
     }
     
     /// Create a new earn position
+    /// - Parameters:
+    ///   - userWalletAddress: User's Zcash address
+    ///   - zecAmount: Amount of ZEC/TAZ deposited
+    ///   - poolId: Optional RHEA pool ID
+    ///   - bridgeInfo: Optional bridge info returned by `/earn/deposit/prepare`
+    ///                 used to ensure the backend reuses the same bridge address
+    ///                 and NEAR intent that the wallet sent funds to.
     func createPosition(
         userWalletAddress: String,
         zecAmount: Double,
-        poolId: String?
+        poolId: String?,
+        bridgeInfo: BridgeDepositInfo?
     ) async throws -> EarnPositionSummary {
         let url = URL(string: "\(baseURL)/api/zapp/earn/positions")!
         var request = URLRequest(url: url)
@@ -119,6 +127,35 @@ final class EarnAPIService {
         ]
         if let poolId = poolId {
             body["pool_id"] = poolId
+        }
+        if let bridgeInfo = bridgeInfo {
+            var bridgeDict: [String: Any] = [
+                "bridgeAddress": bridgeInfo.bridgeAddress,
+                "expectedAmount": bridgeInfo.expectedAmount,
+                "estimatedArrivalMinutes": bridgeInfo.estimatedArrivalMinutes,
+                "bridgeFeePercent": bridgeInfo.bridgeFeePercent,
+                "nearIntentId": bridgeInfo.nearIntentId
+            ]
+            // Optional fields
+            if let isSimulated = bridgeInfo.isSimulated {
+                bridgeDict["isSimulated"] = isSimulated
+            }
+            if let source = bridgeInfo.source {
+                bridgeDict["source"] = source.rawValue
+            }
+            if let depositArgs = bridgeInfo.depositArgs {
+                bridgeDict["depositArgs"] = depositArgs
+            }
+            if let minDepositZec = bridgeInfo.minDepositZec {
+                bridgeDict["minDepositZec"] = minDepositZec
+            }
+            if let nearAccountId = bridgeInfo.nearAccountId {
+                bridgeDict["nearAccountId"] = nearAccountId
+            }
+            if let requiresFinalization = bridgeInfo.requiresFinalizationFromApi {
+                bridgeDict["requiresFinalization"] = requiresFinalization
+            }
+            body["bridge_info"] = bridgeDict
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
