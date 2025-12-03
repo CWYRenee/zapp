@@ -18,6 +18,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.6",
+    "react-qr-code": "^2.0.13",
     "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {

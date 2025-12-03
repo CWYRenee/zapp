@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check, QrCode, X } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 interface QRCodeDisplayProps {
   data: string;
@@ -16,8 +17,6 @@ export function QRCodeDisplay({ data, size = 120, label = 'Payment QR Code' }: Q
   const [copied, setCopied] = useState(false);
 
   // Use Google Charts API for QR code generation (no additional dependencies needed)
-  const qrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(data)}&choe=UTF-8`;
-  const largeQrCodeUrl = `https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=${encodeURIComponent(data)}&choe=UTF-8`;
 
   const handleCopy = async () => {
     if (typeof navigator === 'undefined' || !navigator.clipboard) return;
@@ -39,13 +38,16 @@ export function QRCodeDisplay({ data, size = 120, label = 'Payment QR Code' }: Q
           className="group relative rounded-lg border-2 border-dashed border-gray-300 bg-white p-2 hover:border-[#FF9417] hover:bg-orange-50 transition-colors"
           title="Click to enlarge"
         >
-          <img
-            src={qrCodeUrl}
-            alt={label}
-            width={size}
-            height={size}
-            className="rounded"
-          />
+          <div
+            className="rounded bg-white p-1"
+            style={{ width: size, height: size }}
+          >
+            <QRCode
+              value={data}
+              size={typeof size === 'number' ? size - 4 : 116}
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
             <QrCode className="h-6 w-6 text-white" />
           </div>
@@ -75,13 +77,13 @@ export function QRCodeDisplay({ data, size = 120, label = 'Payment QR Code' }: Q
               <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
               
               <div className="rounded-lg border-2 border-gray-200 bg-white p-3">
-                <img
-                  src={largeQrCodeUrl}
-                  alt={label}
-                  width={300}
-                  height={300}
-                  className="rounded"
-                />
+                <div className="rounded bg-white p-2">
+                  <QRCode
+                    value={data}
+                    size={280}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </div>
               </div>
 
               <div className="w-full">
