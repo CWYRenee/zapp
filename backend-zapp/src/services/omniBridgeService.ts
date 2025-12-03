@@ -137,7 +137,7 @@ function createNearKitWrapper(account: Account, connection: any) {
     },
 
     // Transaction builder used by NearBridgeClient
-    transaction(signerId: string) {
+    transaction(_signerId: string) {
       const acct = account; // Single-account backend; signerId maps to this account
       return {
         functionCall: (
