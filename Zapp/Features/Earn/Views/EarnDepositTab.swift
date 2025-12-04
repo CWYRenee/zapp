@@ -73,22 +73,27 @@ struct EarnDepositTab: View {
                 .fontWeight(.medium)
                 .foregroundColor(ZapColors.textPrimary)
             
-            HStack {
-                TextField("0.00", text: $viewModel.depositAmount)
-                    .font(.system(size: 28, weight: .semibold, design: .rounded))
-                    .foregroundColor(ZapColors.textPrimary)
-                    .keyboardType(.decimalPad)
-                    .multilineTextAlignment(.leading)
-                    .disabled(viewModel.depositTransactionSent)
-                
+            HStack(spacing: 0) {
                 Text("ZEC")
-                    .font(.title3)
-                    .fontWeight(.medium)
-                    .foregroundColor(ZapColors.textSecondary)
+                    .font(.headline)
+                    .foregroundColor(ZapColors.textPrimary)
+                    .padding(.leading, ZapSpacing.base)
+                    .padding(.trailing, ZapSpacing.xs)
+                
+                TextField("0.00000000", text: $viewModel.depositAmount)
+                    .keyboardType(.decimalPad)
+                    .padding(.vertical, 12)
+                    .padding(.trailing, ZapSpacing.xs)
+                    .disabled(viewModel.depositTransactionSent)
             }
-            .padding(ZapSpacing.sm)
             .background(Color(.secondarySystemBackground))
             .cornerRadius(ZapRadius.medium)
+            
+            if let hint = viewModel.depositInlineHint {
+                Text(hint)
+                    .font(.footnote)
+                    .foregroundColor(ZapColors.textSecondary)
+            }
             
             // Quick Amount Buttons (inline)
             HStack(spacing: ZapSpacing.xs) {

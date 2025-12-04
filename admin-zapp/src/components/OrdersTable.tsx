@@ -138,7 +138,7 @@ export function OrdersTable() {
         {orders.map((order) => (
           <div
             key={order._id}
-            className="rounded-md border border-gray-200 bg-white p-3 shadow-sm flex flex-col gap-2"
+            className="rounded-md border border-gray-200 bg-white p-3 shadow-sm flex flex-col gap-2 overflow-hidden"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1 text-xs text-gray-700">
@@ -148,7 +148,7 @@ export function OrdersTable() {
                   <div className="text-[11px] text-gray-500">Completed {new Date(order.updatedAt).toLocaleString()}</div>
                 )}
               </div>
-              <div className="space-y-1 text-xs text-right">
+              <div className="space-y-1 text-xs text-right min-w-0">
                 <div className="flex items-center justify-end gap-1">
                   <span className="text-[11px] text-gray-500">Send fiat</span>
                   <button
@@ -188,7 +188,10 @@ export function OrdersTable() {
                     <Copy className="h-3 w-3" aria-hidden="true" />
                   </button>
                 </div>
-                <div className="text-[11px] text-gray-800 truncate">
+                <div
+                  className="text-[11px] text-gray-800 truncate max-w-[160px] ml-auto"
+                  title={order.merchantName || order.merchantCode}
+                >
                   {order.merchantName || order.merchantCode}
                 </div>
               </div>
@@ -199,7 +202,10 @@ export function OrdersTable() {
                 <div className="flex items-start gap-2">
                   <span className="flex-shrink-0 text-[11px] text-gray-500">Payment link</span>
                   <div className="flex-1 min-w-0">
-                    <div className="max-h-10 overflow-y-auto font-mono text-[10px] text-gray-800 break-all">
+                    <div
+                      className="font-mono text-[10px] text-gray-800 truncate"
+                      title={order.scannedQRCodeData}
+                    >
                       {order.scannedQRCodeData}
                     </div>
                   </div>
@@ -375,14 +381,14 @@ export function OrdersTable() {
                     group.orders.map((order) => (
                       <div
                         key={order._id}
-                        className="rounded-md border border-gray-200 bg-white p-3 shadow-sm flex flex-col gap-2"
+                        className="rounded-md border border-gray-200 bg-white p-3 shadow-sm flex flex-col gap-2 overflow-hidden"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="space-y-1 text-xs text-gray-700">
                             <div className="font-mono text-[11px] break-all text-gray-900">{order.orderId}</div>
                             <div className="text-[11px] text-gray-500">Created {new Date(order.createdAt).toLocaleString()}</div>
                           </div>
-                          <div className="space-y-1 text-xs text-right">
+                          <div className="space-y-1 text-xs text-right min-w-0">
                             <div className="flex items-center justify-end gap-1">
                               <span className="text-[11px] text-gray-500">Send fiat</span>
                               <button
@@ -399,7 +405,10 @@ export function OrdersTable() {
                             <div className="flex items-center justify-end gap-1 mt-1">
                               <span className="text-[11px] text-gray-500">Facilitator</span>
                             </div>
-                            <div className="text-[11px] text-gray-800 truncate">
+                            <div
+                              className="text-[11px] text-gray-800 truncate max-w-[160px] ml-auto"
+                              title={order.merchantName || order.merchantCode}
+                            >
                               {order.merchantName || order.merchantCode}
                             </div>
                           </div>
@@ -410,7 +419,10 @@ export function OrdersTable() {
                             <div className="flex items-start gap-2">
                               <span className="flex-shrink-0 text-[11px] text-gray-500">Payment link</span>
                               <div className="flex-1 min-w-0">
-                                <div className="max-h-10 overflow-y-auto font-mono text-[10px] text-gray-800 break-all">
+                                <div
+                                  className="font-mono text-[10px] text-gray-800 truncate"
+                                  title={order.scannedQRCodeData}
+                                >
                                   {order.scannedQRCodeData}
                                 </div>
                               </div>

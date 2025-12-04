@@ -299,6 +299,15 @@ final class EarnViewModel: ObservableObject {
         return "\(pool.displayName) LP"
     }
     
+    /// Inline hint for deposit input (e.g. estimated LP tokens)
+    var depositInlineHint: String? {
+        let amount = depositAmountDouble
+        guard amount > 0 else { return nil }
+        guard selectedPool != nil else { return nil }
+        let estimated = estimatedAmount
+        return String(format: "≈ %.4f %@", estimated, receiveAssetSymbol)
+    }
+    
     /// Description of what user is depositing into
     var depositDescription: String {
         guard let pool = selectedPool else { return "Liquidity Pool" }
